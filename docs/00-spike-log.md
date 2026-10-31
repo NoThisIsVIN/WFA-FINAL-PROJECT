@@ -9,7 +9,7 @@ Each folder holds the models, a `run.ps1` that reproduces it, and a `RESULT.md` 
 Desktop Modeler 5.49, bpmnlint 12.0.0 + camunda-compat 2.63.0 (`camunda-cloud-8-10`) + zeebe-bpmn-moddle 2.0.0,
 Mailpit 1.31.6.
 
-**Result: 12 PASS, 3 PARTIAL, 0 FAIL.** The partial ones each have a tested fallback.
+**Result: 11 PASS, 3 PARTIAL, 0 FAIL (14 spikes).** The partial ones each have a tested fallback.
 
 ## Results
 
