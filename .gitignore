@@ -20,3 +20,7 @@ camunda-data/
 .vscode/
 *.iml
 .DS_Store
+
+# Private working files (kept on disk, never committed)
+docs/
+spikes/
