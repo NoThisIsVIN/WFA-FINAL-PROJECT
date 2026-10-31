@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Defs_S1c" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.40.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <bpmn:process id="spike-s1-noguard-control" name="Spike S1 control - conditional ESP WITHOUT guard" isExecutable="true">
+    <bpmn:startEvent id="Start" name="Start">
+      <bpmn:outgoing>Flow_Start_SP</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:subProcess id="SP" name="Assessment sub-process">
+      <bpmn:incoming>Flow_Start_SP</bpmn:incoming>
+      <bpmn:outgoing>Flow_SP_End</bpmn:outgoing>
+      <bpmn:startEvent id="SP_Start" name="SP start">
+        <bpmn:outgoing>Flow_SPStart_Wait</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:serviceTask id="Wait" name="Wait (assessment)">
+        <bpmn:extensionElements>
+          <zeebe:taskDefinition type="spike-s1-noguard-wait" />
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_SPStart_Wait</bpmn:incoming>
+        <bpmn:outgoing>Flow_Wait_SPEnd</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:endEvent id="SP_End" name="SP end">
+        <bpmn:incoming>Flow_Wait_SPEnd</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_SPStart_Wait" sourceRef="SP_Start" targetRef="Wait" />
+      <bpmn:sequenceFlow id="Flow_Wait_SPEnd" sourceRef="Wait" targetRef="SP_End" />
+      <bpmn:subProcess id="ESP_Load" name="Load over threshold" triggeredByEvent="true">
+        <bpmn:startEvent id="ESP_CondStart" name="Load &gt; threshold" isInterrupting="false">
+          <bpmn:outgoing>Flow_Cond_Mark</bpmn:outgoing>
+          <bpmn:conditionalEventDefinition id="CondDef_Load">
+            <bpmn:extensionElements>
+              <zeebe:conditionalFilter variableEvents="create, update" />
+            </bpmn:extensionElements>
+            <bpmn:condition xsi:type="bpmn:tFormalExpression">=load &gt; threshold</bpmn:condition>
+          </bpmn:conditionalEventDefinition>
+        </bpmn:startEvent>
+        <bpmn:scriptTask id="MarkUpgrade" name="Mark upgrade requested">
+          <bpmn:extensionElements>
+            <zeebe:script expression="=true" resultVariable="upgradeRequested" />
+          </bpmn:extensionElements>
+          <bpmn:incoming>Flow_Cond_Mark</bpmn:incoming>
+          <bpmn:outgoing>Flow_Mark_Upgrade</bpmn:outgoing>
+        </bpmn:scriptTask>
+        <bpmn:serviceTask id="UpgradeWork" name="Upgrade work">
+          <bpmn:extensionElements>
+            <zeebe:taskDefinition type="spike-s1-noguard-upgrade" />
+          </bpmn:extensionElements>
+          <bpmn:incoming>Flow_Mark_Upgrade</bpmn:incoming>
+          <bpmn:outgoing>Flow_Upgrade_EspEnd</bpmn:outgoing>
+        </bpmn:serviceTask>
+        <bpmn:endEvent id="ESP_End" name="Upgrade handled">
+          <bpmn:incoming>Flow_Upgrade_EspEnd</bpmn:incoming>
+        </bpmn:endEvent>
+        <bpmn:sequenceFlow id="Flow_Cond_Mark" sourceRef="ESP_CondStart" targetRef="MarkUpgrade" />
+        <bpmn:sequenceFlow id="Flow_Mark_Upgrade" sourceRef="MarkUpgrade" targetRef="UpgradeWork" />
+        <bpmn:sequenceFlow id="Flow_Upgrade_EspEnd" sourceRef="UpgradeWork" targetRef="ESP_End" />
+      </bpmn:subProcess>
+    </bpmn:subProcess>
+    <bpmn:endEvent id="End" name="End">
+      <bpmn:incoming>Flow_SP_End</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_SP" sourceRef="Start" targetRef="SP" />
+    <bpmn:sequenceFlow id="Flow_SP_End" sourceRef="SP" targetRef="End" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_S1">
+    <bpmndi:BPMNPlane id="Plane_S1" bpmnElement="spike-s1-noguard-control">
+      <bpmndi:BPMNShape id="Start_di" bpmnElement="Start"><dc:Bounds x="152" y="232" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_di" bpmnElement="SP" isExpanded="true"><dc:Bounds x="240" y="100" width="640" height="400" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_Start_di" bpmnElement="SP_Start"><dc:Bounds x="280" y="172" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Wait_di" bpmnElement="Wait"><dc:Bounds x="370" y="150" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_End_di" bpmnElement="SP_End"><dc:Bounds x="532" y="172" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ESP_Load_di" bpmnElement="ESP_Load" isExpanded="true"><dc:Bounds x="280" y="290" width="560" height="180" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ESP_CondStart_di" bpmnElement="ESP_CondStart"><dc:Bounds x="310" y="362" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="MarkUpgrade_di" bpmnElement="MarkUpgrade"><dc:Bounds x="400" y="340" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UpgradeWork_di" bpmnElement="UpgradeWork"><dc:Bounds x="560" y="340" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ESP_End_di" bpmnElement="ESP_End"><dc:Bounds x="732" y="362" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_di" bpmnElement="End"><dc:Bounds x="942" y="282" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_SP_di" bpmnElement="Flow_Start_SP"><di:waypoint x="188" y="250" /><di:waypoint x="240" y="250" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SPStart_Wait_di" bpmnElement="Flow_SPStart_Wait"><di:waypoint x="316" y="190" /><di:waypoint x="370" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Wait_SPEnd_di" bpmnElement="Flow_Wait_SPEnd"><di:waypoint x="470" y="190" /><di:waypoint x="532" y="190" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Cond_Mark_di" bpmnElement="Flow_Cond_Mark"><di:waypoint x="346" y="380" /><di:waypoint x="400" y="380" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Mark_Upgrade_di" bpmnElement="Flow_Mark_Upgrade"><di:waypoint x="500" y="380" /><di:waypoint x="560" y="380" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Upgrade_EspEnd_di" bpmnElement="Flow_Upgrade_EspEnd"><di:waypoint x="660" y="380" /><di:waypoint x="732" y="380" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SP_End_di" bpmnElement="Flow_SP_End"><di:waypoint x="880" y="300" /><di:waypoint x="942" y="300" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,199 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20261031175106
+Username: VINS-ZEPHY\vines
+RunAs User: VINS-ZEPHY\vines
+Configuration Name: 
+Machine: VINS-ZEPHY (Microsoft Windows NT 10.0.26300.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File C:\Users\vines\OneDrive\Documents\WFA final\spikes\S03-compensation-root-esp\run.ps1
+Process ID: 36468
+PSVersion: 5.1.26100.9711
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9711
+BuildVersion: 10.0.26100.9711
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+== Deploy
+  deployed spike-s3-comp-root-esp-nonint v2 key=2251799813695731
+  deployed spike-s3-nested-withdraw v1 key=2251799813695730
+  deployed spike-s3-comp-root-esp v3 key=2251799813695732
+== [INT] A: SP1 COMPLETED, root Reserve COMPLETED, withdraw while Await (compensable) is in flight
+  started spike-s3-comp-root-esp pik=2251799813695733
+  [PASS] [INT] A0 Await job active
+  publish response: {"tenantId":"\u003cdefault\u003e","messageKey":"2251799813695770"}
+  handler jobs: spike-s3-undo-survey=1 spike-s3-undo-design=1 spike-s3-undo-reserve=1 spike-s3-undo-await=0
+  [PASS] [INT] A1 UndoSurvey runs (inside COMPLETED embedded SP)
+  [PASS] [INT] A2 UndoDesign runs (inside COMPLETED embedded SP)
+  [PASS] [INT] A3 UndoReserve runs (completed root task)
+  [PASS] [INT] A4 UndoAwait does NOT run (in-flight task interrupted)
+  [PASS] [INT] A5 CompThrowAll waits while handlers pending
+  [PASS] [INT] A6 Await TERMINATED by interrupting ESP before compensation Await=TERMINATED
+  [PASS] [INT] A-end PI ended (COMPLETED) via Withdraw_End, no incidents incidents=0
+  --- element instances [INT] A final (pik=2251799813695733)
+    Start                            START_EVENT                COMPLETED
+    SP1                              SUB_PROCESS                COMPLETED
+    SP1_Start                        START_EVENT                COMPLETED
+    Survey                           SERVICE_TASK               COMPLETED
+    Design                           SERVICE_TASK               COMPLETED
+    SP1_End                          END_EVENT                  COMPLETED
+    Reserve                          SERVICE_TASK               COMPLETED
+    Await                            SERVICE_TASK               TERMINATED
+    WithdrawESP                      EVENT_SUB_PROCESS          COMPLETED
+    Withdraw_Start                   START_EVENT                COMPLETED
+    CompThrowAll                     INTERMEDIATE_THROW_EVENT   COMPLETED
+    Survey_Comp                      BOUNDARY_EVENT             COMPLETED
+    UndoSurvey                       SERVICE_TASK               COMPLETED
+    Design_Comp                      BOUNDARY_EVENT             COMPLETED
+    UndoDesign                       SERVICE_TASK               COMPLETED
+    Reserve_Comp                     BOUNDARY_EVENT             COMPLETED
+    UndoReserve                      SERVICE_TASK               COMPLETED
+    Withdraw_End                     END_EVENT                  COMPLETED
+== [INT] B: withdraw while SP1 still ACTIVE (Survey COMPLETED, Design in flight)
+  started spike-s3-comp-root-esp pik=2251799813695807
+  handler jobs: spike-s3-undo-survey=0 spike-s3-undo-design=0 spike-s3-undo-reserve=0 spike-s3-undo-await=0
+  [FAIL] [INT] B1 (info) UndoSurvey runs for completed task inside an ACTIVE (then terminated) SP jobs=0
+  [PASS] [INT] B2 UndoDesign does NOT run (in flight)
+  [PASS] [INT] B3 UndoReserve does NOT run (never reached)
+  [PASS] [INT] B-end PI ended (COMPLETED) via Withdraw_End, no incidents incidents=0
+  --- element instances [INT] B final (pik=2251799813695807)
+    Start                            START_EVENT                COMPLETED
+    SP1                              SUB_PROCESS                TERMINATED
+    SP1_Start                        START_EVENT                COMPLETED
+    Survey                           SERVICE_TASK               COMPLETED
+    Design                           SERVICE_TASK               TERMINATED
+    WithdrawESP                      EVENT_SUB_PROCESS          COMPLETED
+    Withdraw_Start                   START_EVENT                COMPLETED
+    CompThrowAll                     INTERMEDIATE_THROW_EVENT   COMPLETED
+    Withdraw_End                     END_EVENT                  COMPLETED
+== [INT] C: withdraw immediately (nothing completed yet)
+  started spike-s3-comp-root-esp pik=2251799813695863
+  handler jobs: spike-s3-undo-survey=0 spike-s3-undo-design=0 spike-s3-undo-reserve=0 spike-s3-undo-await=0
+  [PASS] [INT] C1 no handler runs; throw completes immediately
+  [PASS] [INT] C-end PI ended (COMPLETED) via Withdraw_End, no incidents incidents=0
+  --- element instances [INT] C final (pik=2251799813695863)
+    Start                            START_EVENT                COMPLETED
+    SP1                              SUB_PROCESS                TERMINATED
+    SP1_Start                        START_EVENT                COMPLETED
+    Survey                           SERVICE_TASK               TERMINATED
+    WithdrawESP                      EVENT_SUB_PROCESS          COMPLETED
+    Withdraw_Start                   START_EVENT                COMPLETED
+    CompThrowAll                     INTERMEDIATE_THROW_EVENT   COMPLETED
+    Withdraw_End                     END_EVENT                  COMPLETED
+== [NONINT] A: SP1 COMPLETED, root Reserve COMPLETED, withdraw while Await (compensable) is in flight
+  started spike-s3-comp-root-esp-nonint pik=2251799813695923
+  [PASS] [NONINT] A0 Await job active
+  publish response: {"tenantId":"\u003cdefault\u003e","messageKey":"2251799813695960"}
+  handler jobs: spike-s3-undo-survey=1 spike-s3-undo-design=1 spike-s3-undo-reserve=1 spike-s3-undo-await=0
+  [PASS] [NONINT] A1 UndoSurvey runs (inside COMPLETED embedded SP)
+  [PASS] [NONINT] A2 UndoDesign runs (inside COMPLETED embedded SP)
+  [PASS] [NONINT] A3 UndoReserve runs (completed root task)
+  [PASS] [NONINT] A4 UndoAwait does NOT run (in-flight task interrupted)
+  [PASS] [NONINT] A5 CompThrowAll waits while handlers pending
+  [PASS] [NONINT] A6 Await still ACTIVE during compensation (non-interrupting) Await=ACTIVE
+  TIMEOUT waiting for: [NONINT] A completed
+  [FAIL] [NONINT] A-end PI ended (ACTIVE) via Withdraw_End, no incidents incidents=0
+  --- element instances [NONINT] A final (pik=2251799813695923)
+    Start                            START_EVENT                COMPLETED
+    SP1                              SUB_PROCESS                COMPLETED
+    SP1_Start                        START_EVENT                COMPLETED
+    Survey                           SERVICE_TASK               COMPLETED
+    Design                           SERVICE_TASK               COMPLETED
+    SP1_End                          END_EVENT                  COMPLETED
+    Reserve                          SERVICE_TASK               COMPLETED
+    Await                            SERVICE_TASK               ACTIVE
+    WithdrawESP                      EVENT_SUB_PROCESS          COMPLETED
+    Withdraw_Start                   START_EVENT                COMPLETED
+    CompThrowAll                     INTERMEDIATE_THROW_EVENT   COMPLETED
+    Survey_Comp                      BOUNDARY_EVENT             COMPLETED
+    UndoSurvey                       SERVICE_TASK               COMPLETED
+    Design_Comp                      BOUNDARY_EVENT             COMPLETED
+    UndoDesign                       SERVICE_TASK               COMPLETED
+    Reserve_Comp                     BOUNDARY_EVENT             COMPLETED
+    UndoReserve                      SERVICE_TASK               COMPLETED
+    Withdraw_End                     END_EVENT                  COMPLETED
+  (still ACTIVE: cancelled 2251799813695923)
+== [NONINT] B: withdraw while SP1 still ACTIVE (Survey COMPLETED, Design in flight)
+  started spike-s3-comp-root-esp-nonint pik=2251799813696015
+  handler jobs: spike-s3-undo-survey=0 spike-s3-undo-design=0 spike-s3-undo-reserve=0 spike-s3-undo-await=0
+  [FAIL] [NONINT] B1 (info) UndoSurvey runs for completed task inside an ACTIVE (then terminated) SP jobs=0
+  [PASS] [NONINT] B2 UndoDesign does NOT run (in flight)
+  [PASS] [NONINT] B3 UndoReserve does NOT run (never reached)
+  TIMEOUT waiting for: [NONINT] B completed
+  [FAIL] [NONINT] B-end PI ended (ACTIVE) via Withdraw_End, no incidents incidents=0
+  --- element instances [NONINT] B final (pik=2251799813696015)
+    Start                            START_EVENT                COMPLETED
+    SP1                              SUB_PROCESS                ACTIVE
+    SP1_Start                        START_EVENT                COMPLETED
+    Survey                           SERVICE_TASK               COMPLETED
+    Design                           SERVICE_TASK               ACTIVE
+    WithdrawESP                      EVENT_SUB_PROCESS          COMPLETED
+    Withdraw_Start                   START_EVENT                COMPLETED
+    CompThrowAll                     INTERMEDIATE_THROW_EVENT   COMPLETED
+    Withdraw_End                     END_EVENT                  COMPLETED
+  (still ACTIVE: cancelled 2251799813696015)
+== [NONINT] C: withdraw immediately (nothing completed yet)
+  started spike-s3-comp-root-esp-nonint pik=2251799813696102
+  handler jobs: spike-s3-undo-survey=0 spike-s3-undo-design=0 spike-s3-undo-reserve=0 spike-s3-undo-await=0
+  [PASS] [NONINT] C1 no handler runs; throw completes immediately
+  TIMEOUT waiting for: [NONINT] C completed
+  [FAIL] [NONINT] C-end PI ended (ACTIVE) via Withdraw_End, no incidents incidents=0
+  --- element instances [NONINT] C final (pik=2251799813696102)
+    Start                            START_EVENT                COMPLETED
+    SP1                              SUB_PROCESS                ACTIVE
+    SP1_Start                        START_EVENT                COMPLETED
+    Survey                           SERVICE_TASK               ACTIVE
+    WithdrawESP                      EVENT_SUB_PROCESS          COMPLETED
+    Withdraw_Start                   START_EVENT                COMPLETED
+    CompThrowAll                     INTERMEDIATE_THROW_EVENT   COMPLETED
+    Withdraw_End                     END_EVENT                  COMPLETED
+  (still ACTIVE: cancelled 2251799813696102)
+== [NESTED] B: withdraw ESP inside SP1 + root withdraw ESP; withdraw while Design in flight
+  started spike-s3-nested-withdraw pik=2251799813696184
+  handler jobs: spike-s3-undo-survey=0 spike-s3-undo-design=0 spike-s3-undo-reserve=0 spike-s3-undo-await=0
+  [FAIL] [NESTED] B1 UndoSurvey runs via SP1-local withdraw ESP
+  [FAIL] [NESTED] B2 one message -> only ONE ESP triggered (inner wins) InnerWithdrawESP=0 WithdrawESP=1
+  [FAIL] [NESTED] B3 SP1 completes, XOR routes to End_Withdrawn
+  --- element instances [NESTED] B final (pik=2251799813696184)
+    Start                            START_EVENT                COMPLETED
+    SP1                              SUB_PROCESS                TERMINATED
+    SP1_Start                        START_EVENT                COMPLETED
+    Survey                           SERVICE_TASK               COMPLETED
+    Design                           SERVICE_TASK               TERMINATED
+    WithdrawESP                      EVENT_SUB_PROCESS          COMPLETED
+    Withdraw_Start                   START_EVENT                COMPLETED
+    CompThrowAll                     INTERMEDIATE_THROW_EVENT   COMPLETED
+    Withdraw_End                     END_EVENT                  COMPLETED
+== [NESTED] A: withdraw after SP1 completed (root ESP handles it)
+  started spike-s3-nested-withdraw pik=2251799813696241
+  handler jobs: spike-s3-undo-survey=1 spike-s3-undo-design=1 spike-s3-undo-reserve=1 spike-s3-undo-await=0
+  [PASS] [NESTED] A1 root ESP compensates Survey+Design (completed SP1) + Reserve, not Await
+  [PASS] [NESTED] A-end PI ended (COMPLETED) via Withdraw_End, no incidents incidents=0
+  --- element instances [NESTED] A final (pik=2251799813696241)
+    Start                            START_EVENT                COMPLETED
+    SP1                              SUB_PROCESS                COMPLETED
+    SP1_Start                        START_EVENT                COMPLETED
+    Survey                           SERVICE_TASK               COMPLETED
+    Design                           SERVICE_TASK               COMPLETED
+    SP1_End                          END_EVENT                  COMPLETED
+    Gw_Withdrawn                     EXCLUSIVE_GATEWAY          COMPLETED
+    Reserve                          SERVICE_TASK               COMPLETED
+    Await                            SERVICE_TASK               TERMINATED
+    WithdrawESP                      EVENT_SUB_PROCESS          COMPLETED
+    Withdraw_Start                   START_EVENT                COMPLETED
+    CompThrowAll                     INTERMEDIATE_THROW_EVENT   COMPLETED
+    Survey_Comp                      BOUNDARY_EVENT             COMPLETED
+    UndoSurvey                       SERVICE_TASK               COMPLETED
+    Design_Comp                      BOUNDARY_EVENT             COMPLETED
+    UndoDesign                       SERVICE_TASK               COMPLETED
+    Reserve_Comp                     BOUNDARY_EVENT             COMPLETED
+    UndoReserve                      SERVICE_TASK               COMPLETED
+    Withdraw_End                     END_EVENT                  COMPLETED
+== Summary @{check=[INT] A0 Await job active; ok=True; detail=} @{check=[INT] A1 UndoSurvey runs (inside COMPLETED embedded SP); ok=True; detail=} @{check=[INT] A2 UndoDesign runs (inside COMPLETED embedded SP); ok=True; detail=} @{check=[INT] A3 UndoReserve runs (completed root task); ok=True; detail=} @{check=[INT] A4 UndoAwait does NOT run (in-flight task interrupted); ok=True; detail=} @{check=[INT] A5 CompThrowAll waits while handlers pending; ok=True; detail=} @{check=[INT] A6 Await TERMINATED by interrupting ESP before compensation; ok=True; detail=Await=TERMINATED} @{check=[INT] A-end PI ended (COMPLETED) via Withdraw_End, no incidents; ok=True; detail=incidents=0} @{check=[INT] B1 (info) UndoSurvey runs for completed task inside an ACTIVE (then terminated) SP; ok=False; detail=jobs=0} @{check=[INT] B2 UndoDesign does NOT run (in flight); ok=True; detail=} @{check=[INT] B3 UndoReserve does NOT run (never reached); ok=True; detail=} @{check=[INT] B-end PI ended (COMPLETED) via Withdraw_End, no incidents; ok=True; detail=incidents=0} @{check=[INT] C1 no handler runs; throw completes immediately; ok=True; detail=} @{check=[INT] C-end PI ended (COMPLETED) via Withdraw_End, no incidents; ok=True; detail=incidents=0} @{check=[NONINT] A0 Await job active; ok=True; detail=} @{check=[NONINT] A1 UndoSurvey runs (inside COMPLETED embedded SP); ok=True; detail=} @{check=[NONINT] A2 UndoDesign runs (inside COMPLETED embedded SP); ok=True; detail=} @{check=[NONINT] A3 UndoReserve runs (completed root task); ok=True; detail=} @{check=[NONINT] A4 UndoAwait does NOT run (in-flight task interrupted); ok=True; detail=} @{check=[NONINT] A5 CompThrowAll waits while handlers pending; ok=True; detail=} @{check=[NONINT] A6 Await still ACTIVE during compensation (non-interrupting); ok=True; detail=Await=ACTIVE} @{check=[NONINT] A-end PI ended (ACTIVE) via Withdraw_End, no incidents; ok=False; detail=incidents=0} @{check=[NONINT] B1 (info) UndoSurvey runs for completed task inside an ACTIVE (then terminated) SP; ok=False; detail=jobs=0} @{check=[NONINT] B2 UndoDesign does NOT run (in flight); ok=True; detail=} @{check=[NONINT] B3 UndoReserve does NOT run (never reached); ok=True; detail=} @{check=[NONINT] B-end PI ended (ACTIVE) via Withdraw_End, no incidents; ok=False; detail=incidents=0} @{check=[NONINT] C1 no handler runs; throw completes immediately; ok=True; detail=} @{check=[NONINT] C-end PI ended (ACTIVE) via Withdraw_End, no incidents; ok=False; detail=incidents=0} @{check=[NESTED] B1 UndoSurvey runs via SP1-local withdraw ESP; ok=False; detail=} @{check=[NESTED] B2 one message -> only ONE ESP triggered (inner wins); ok=False; detail=InnerWithdrawESP=0 WithdrawESP=1} @{check=[NESTED] B3 SP1 completes, XOR routes to End_Withdrawn; ok=False; detail=} @{check=[NESTED] A1 root ESP compensates Survey+Design (completed SP1) + Reserve, not Await; ok=True; detail=} @{check=[NESTED] A-end PI ended (COMPLETED) via Withdraw_End, no incidents; ok=True; detail=incidents=0}
+
+**********************
+Windows PowerShell transcript end
+End time: 20261031175522
+**********************

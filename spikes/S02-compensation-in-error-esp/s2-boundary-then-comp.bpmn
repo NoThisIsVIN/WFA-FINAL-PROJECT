@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Defs_S2_bnd" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.40.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <bpmn:error id="Error_Validation" name="Validation failed" errorCode="VALIDATION_FAILED" />
+  <bpmn:process id="spike-s2-boundary-then-comp" name="Spike S2 fallback - error boundary on SP, compensation throw on root path" isExecutable="true">
+    <bpmn:startEvent id="Start" name="Start">
+      <bpmn:outgoing>Flow_Start_SP</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:subProcess id="SP" name="Reservation sub-process">
+      <bpmn:incoming>Flow_Start_SP</bpmn:incoming>
+      <bpmn:outgoing>Flow_SP_EndOK</bpmn:outgoing>
+      <bpmn:startEvent id="SP_Start" name="SP start">
+        <bpmn:outgoing>Flow_SPStart_Reserve</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:serviceTask id="Reserve" name="Reserve capacity">
+        <bpmn:extensionElements><zeebe:taskDefinition type="spike-s2-reserve" /></bpmn:extensionElements>
+        <bpmn:incoming>Flow_SPStart_Reserve</bpmn:incoming>
+        <bpmn:outgoing>Flow_Reserve_Validate</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:boundaryEvent id="Reserve_Comp" name="Compensate reserve" attachedToRef="Reserve">
+        <bpmn:compensateEventDefinition id="CompDef_Reserve" />
+      </bpmn:boundaryEvent>
+      <bpmn:serviceTask id="CancelReserve" name="Cancel reservation" isForCompensation="true">
+        <bpmn:extensionElements><zeebe:taskDefinition type="spike-s2-cancel-reserve" /></bpmn:extensionElements>
+      </bpmn:serviceTask>
+      <bpmn:serviceTask id="Validate" name="Validate (throws error)">
+        <bpmn:extensionElements><zeebe:taskDefinition type="spike-s2-validate" /></bpmn:extensionElements>
+        <bpmn:incoming>Flow_Reserve_Validate</bpmn:incoming>
+        <bpmn:outgoing>Flow_Validate_SPEnd</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:endEvent id="SP_End" name="SP end">
+        <bpmn:incoming>Flow_Validate_SPEnd</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_SPStart_Reserve" sourceRef="SP_Start" targetRef="Reserve" />
+      <bpmn:sequenceFlow id="Flow_Reserve_Validate" sourceRef="Reserve" targetRef="Validate" />
+      <bpmn:sequenceFlow id="Flow_Validate_SPEnd" sourceRef="Validate" targetRef="SP_End" />
+      <bpmn:association id="Assoc_Reserve" associationDirection="One" sourceRef="Reserve_Comp" targetRef="CancelReserve" />
+    </bpmn:subProcess>
+    <bpmn:boundaryEvent id="SP_ErrorBoundary" name="Validation failed" attachedToRef="SP">
+      <bpmn:outgoing>Flow_Boundary_Comp</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrDef_Boundary" errorRef="Error_Validation" />
+    </bpmn:boundaryEvent>
+    <bpmn:intermediateThrowEvent id="CompThrowRoot" name="Compensate all (root)">
+      <bpmn:incoming>Flow_Boundary_Comp</bpmn:incoming>
+      <bpmn:outgoing>Flow_Comp_Handle</bpmn:outgoing>
+      <bpmn:compensateEventDefinition id="CompDef_Root" waitForCompletion="true" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:serviceTask id="HandleFailure" name="Handle failure">
+      <bpmn:extensionElements><zeebe:taskDefinition type="spike-s2-handle" /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Comp_Handle</bpmn:incoming>
+      <bpmn:outgoing>Flow_Handle_EndFailed</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Failed" name="Ended failed">
+      <bpmn:incoming>Flow_Handle_EndFailed</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End_OK" name="Ended OK">
+      <bpmn:incoming>Flow_SP_EndOK</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_SP" sourceRef="Start" targetRef="SP" />
+    <bpmn:sequenceFlow id="Flow_SP_EndOK" sourceRef="SP" targetRef="End_OK" />
+    <bpmn:sequenceFlow id="Flow_Boundary_Comp" sourceRef="SP_ErrorBoundary" targetRef="CompThrowRoot" />
+    <bpmn:sequenceFlow id="Flow_Comp_Handle" sourceRef="CompThrowRoot" targetRef="HandleFailure" />
+    <bpmn:sequenceFlow id="Flow_Handle_EndFailed" sourceRef="HandleFailure" targetRef="End_Failed" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_S2_bnd">
+    <bpmndi:BPMNPlane id="Plane_S2_bnd" bpmnElement="spike-s2-boundary-then-comp">
+      <bpmndi:BPMNShape id="Start_di" bpmnElement="Start"><dc:Bounds x="152" y="192" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_di" bpmnElement="SP" isExpanded="true"><dc:Bounds x="240" y="80" width="560" height="280" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_Start_di" bpmnElement="SP_Start"><dc:Bounds x="272" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Reserve_di" bpmnElement="Reserve"><dc:Bounds x="350" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Reserve_Comp_di" bpmnElement="Reserve_Comp"><dc:Bounds x="382" y="182" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CancelReserve_di" bpmnElement="CancelReserve"><dc:Bounds x="350" y="250" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Validate_di" bpmnElement="Validate"><dc:Bounds x="520" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_End_di" bpmnElement="SP_End"><dc:Bounds x="702" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP_ErrorBoundary_di" bpmnElement="SP_ErrorBoundary"><dc:Bounds x="702" y="342" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CompThrowRoot_di" bpmnElement="CompThrowRoot"><dc:Bounds x="822" y="422" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="HandleFailure_di" bpmnElement="HandleFailure"><dc:Bounds x="910" y="400" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Failed_di" bpmnElement="End_Failed"><dc:Bounds x="1072" y="422" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_OK_di" bpmnElement="End_OK"><dc:Bounds x="872" y="202" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_SP_di" bpmnElement="Flow_Start_SP"><di:waypoint x="188" y="210" /><di:waypoint x="240" y="210" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SPStart_Reserve_di" bpmnElement="Flow_SPStart_Reserve"><di:waypoint x="308" y="160" /><di:waypoint x="350" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Reserve_Validate_di" bpmnElement="Flow_Reserve_Validate"><di:waypoint x="450" y="160" /><di:waypoint x="520" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Validate_SPEnd_di" bpmnElement="Flow_Validate_SPEnd"><di:waypoint x="620" y="160" /><di:waypoint x="702" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Assoc_Reserve_di" bpmnElement="Assoc_Reserve"><di:waypoint x="400" y="218" /><di:waypoint x="400" y="250" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SP_EndOK_di" bpmnElement="Flow_SP_EndOK"><di:waypoint x="800" y="220" /><di:waypoint x="872" y="220" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Boundary_Comp_di" bpmnElement="Flow_Boundary_Comp"><di:waypoint x="720" y="378" /><di:waypoint x="720" y="440" /><di:waypoint x="822" y="440" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Comp_Handle_di" bpmnElement="Flow_Comp_Handle"><di:waypoint x="858" y="440" /><di:waypoint x="910" y="440" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Handle_EndFailed_di" bpmnElement="Flow_Handle_EndFailed"><di:waypoint x="1010" y="440" /><di:waypoint x="1072" y="440" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

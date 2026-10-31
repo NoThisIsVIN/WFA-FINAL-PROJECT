@@ -1,0 +1,175 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20261031173853
+Username: VINS-ZEPHY\vines
+RunAs User: VINS-ZEPHY\vines
+Configuration Name: 
+Machine: VINS-ZEPHY (Microsoft Windows NT 10.0.26300.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File spikes/S02-compensation-in-error-esp/run.ps1
+Process ID: 11088
+PSVersion: 5.1.26100.9711
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9711
+BuildVersion: 10.0.26100.9711
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+== Deploy
+  deployed spike-s2-flag-route v1 key=2251799813694002
+  deployed spike-s2-comp-all v2 key=2251799813694005
+  deployed spike-s2-boundary-then-comp v1 key=2251799813694003
+  deployed spike-s2-comp-activityref v2 key=2251799813694006
+  deployed spike-s2-root-esp-catch v1 key=2251799813694004
+== ALL : spike-s2-comp-all
+  started spike-s2-comp-all pik=2251799813694479
+  [PASS] ALL-1 CancelReserve handler job created jobs=1 vars={"reservationId":"R-42","spFailed":false,"caseId":"S2-ALL","noticeId":"N-7"}
+  [PASS] ALL-2 RetractNotice handler job created (compensate all) jobs=1
+  [PASS] ALL-3 CompThrow waits for handlers (waitForCompletion) CompThrow=ACTIVE
+  [PASS] ALL-4 (finding) SP_FAILED from inner error ESP NOT caught by boundary on SP -> incident incident: ErrESP_End UNHANDLED_ERROR_EVENT: Expected to throw an error event with the code 'SP_FAILED', but it was not caught. No error events are available in the scope.
+  --- element instances ALL final (stuck) (pik=2251799813694479)
+    Start                            START_EVENT                COMPLETED
+    SP                               SUB_PROCESS                ACTIVE
+    SP_Start                         START_EVENT                COMPLETED
+    Reserve                          SERVICE_TASK               COMPLETED
+    Notify                           SERVICE_TASK               COMPLETED
+    Validate                         SERVICE_TASK               TERMINATED
+    ErrESP                           EVENT_SUB_PROCESS          ACTIVE
+    ErrESP_Start                     START_EVENT                COMPLETED
+    CompThrow                        INTERMEDIATE_THROW_EVENT   COMPLETED
+    Reserve_Comp                     BOUNDARY_EVENT             COMPLETED
+    CancelReserve                    SERVICE_TASK               COMPLETED
+    Notify_Comp                      BOUNDARY_EVENT             COMPLETED
+    RetractNotice                    SERVICE_TASK               COMPLETED
+    ErrESP_End                       END_EVENT                  ACTIVE
+  cancelled 2251799813694479
+== REF : spike-s2-comp-activityref
+  started spike-s2-comp-activityref pik=2251799813694554
+  [PASS] REF-1 CancelReserve handler job created jobs=1 vars={"reservationId":"R-42","spFailed":false,"caseId":"S2-REF","noticeId":"N-7"}
+  [PASS] REF-2 RetractNotice NOT created (activityRef=Reserve only) jobs=0
+  [PASS] REF-3 CompThrow waits for handlers (waitForCompletion) CompThrow=ACTIVE
+  [PASS] REF-4 (finding) SP_FAILED from inner error ESP NOT caught by boundary on SP -> incident incident: ErrESP_End UNHANDLED_ERROR_EVENT: Expected to throw an error event with the code 'SP_FAILED', but it was not caught. No error events are available in the scope.
+  --- element instances REF final (stuck) (pik=2251799813694554)
+    Start                            START_EVENT                COMPLETED
+    SP                               SUB_PROCESS                ACTIVE
+    SP_Start                         START_EVENT                COMPLETED
+    Reserve                          SERVICE_TASK               COMPLETED
+    Notify                           SERVICE_TASK               COMPLETED
+    Validate                         SERVICE_TASK               TERMINATED
+    ErrESP                           EVENT_SUB_PROCESS          ACTIVE
+    ErrESP_Start                     START_EVENT                COMPLETED
+    CompThrow                        INTERMEDIATE_THROW_EVENT   COMPLETED
+    Reserve_Comp                     BOUNDARY_EVENT             COMPLETED
+    CancelReserve                    SERVICE_TASK               COMPLETED
+    ErrESP_End                       END_EVENT                  ACTIVE
+  cancelled 2251799813694554
+== ROOTESP : spike-s2-root-esp-catch
+  started spike-s2-root-esp-catch pik=2251799813694634
+  [PASS] ROOTESP-1 CancelReserve handler job created jobs=1 vars={"reservationId":"R-42","spFailed":false,"caseId":"S2-ROOTESP","noticeId":"N-7"}
+  [PASS] ROOTESP-2 RetractNotice handler job created (compensate all) jobs=1
+  [PASS] ROOTESP-3 CompThrow waits for handlers (waitForCompletion) CompThrow=ACTIVE
+  [FAIL] ROOTESP-4 failure path reached -> spike-s2-root-handle job
+  TIMEOUT waiting for: ROOTESP completed
+  [FAIL] ROOTESP-5 PI COMPLETED via RootErrESP_End, End_OK not reached, no incidents RootErrESP_End=0 End_OK=0 incidents=1
+  --- element instances ROOTESP final (pik=2251799813694634)
+    Start                            START_EVENT                COMPLETED
+    SP                               SUB_PROCESS                ACTIVE
+    SP_Start                         START_EVENT                COMPLETED
+    Reserve                          SERVICE_TASK               COMPLETED
+    Notify                           SERVICE_TASK               COMPLETED
+    Validate                         SERVICE_TASK               TERMINATED
+    ErrESP                           EVENT_SUB_PROCESS          ACTIVE
+    ErrESP_Start                     START_EVENT                COMPLETED
+    CompThrow                        INTERMEDIATE_THROW_EVENT   COMPLETED
+    Reserve_Comp                     BOUNDARY_EVENT             COMPLETED
+    CancelReserve                    SERVICE_TASK               COMPLETED
+    Notify_Comp                      BOUNDARY_EVENT             COMPLETED
+    RetractNotice                    SERVICE_TASK               COMPLETED
+    ErrESP_End                       END_EVENT                  ACTIVE
+== FLAG : spike-s2-flag-route
+  started spike-s2-flag-route pik=2251799813694725
+  [PASS] FLAG-1 CancelReserve handler job created jobs=1 vars={"reservationId":"R-42","spFailed":false,"caseId":"S2-FLAG"}
+  [PASS] FLAG-3 CompThrow waits for handlers (waitForCompletion) CompThrow=ACTIVE
+  [PASS] FLAG-4 failure path reached -> spike-s2-handle job
+  [PASS] FLAG-5 PI COMPLETED via End_Failed, End_OK not reached, no incidents End_Failed=1 End_OK=0 incidents=0
+  --- element instances FLAG final (pik=2251799813694725)
+    Start                            START_EVENT                COMPLETED
+    SP                               SUB_PROCESS                COMPLETED
+    SP_Start                         START_EVENT                COMPLETED
+    Reserve                          SERVICE_TASK               COMPLETED
+    Validate                         SERVICE_TASK               TERMINATED
+    ErrESP                           EVENT_SUB_PROCESS          COMPLETED
+    ErrESP_Start                     START_EVENT                COMPLETED
+    CompThrow                        INTERMEDIATE_THROW_EVENT   COMPLETED
+    Reserve_Comp                     BOUNDARY_EVENT             COMPLETED
+    CancelReserve                    SERVICE_TASK               COMPLETED
+    MarkFailed                       SCRIPT_TASK                COMPLETED
+    ErrESP_End                       END_EVENT                  COMPLETED
+    Gw_Failed                        EXCLUSIVE_GATEWAY          COMPLETED
+    HandleFailure                    SERVICE_TASK               COMPLETED
+    End_Failed                       END_EVENT                  COMPLETED
+== BND : spike-s2-boundary-then-comp
+  started spike-s2-boundary-then-comp pik=2251799813694772
+  [FAIL] BND-1 CancelReserve handler job created jobs=0 vars=
+  [FAIL] BND-3 CompThrowRoot waits for handlers (waitForCompletion) CompThrowRoot=COMPLETED
+  [PASS] BND-4 failure path reached -> spike-s2-handle job
+  [PASS] BND-5 PI COMPLETED via End_Failed, End_OK not reached, no incidents End_Failed=1 End_OK=0 incidents=0
+  --- element instances BND final (pik=2251799813694772)
+    Start                            START_EVENT                COMPLETED
+    SP                               SUB_PROCESS                TERMINATED
+    SP_Start                         START_EVENT                COMPLETED
+    Reserve                          SERVICE_TASK               COMPLETED
+    Validate                         SERVICE_TASK               TERMINATED
+    SP_ErrorBoundary                 BOUNDARY_EVENT             COMPLETED
+    CompThrowRoot                    INTERMEDIATE_THROW_EVENT   COMPLETED
+    HandleFailure                    SERVICE_TASK               COMPLETED
+    End_Failed                       END_EVENT                  COMPLETED
+== CTL : spike-s2-rethrow-control (error ESP rethrows SP_FAILED immediately, NO compensation step)
+  deployed spike-s2-rethrow-control v1 key=2251799813694828
+  started spike-s2-rethrow-control pik=2251799813694829
+  [FAIL] CTL-1 (info) rethrow from error ESP WITHOUT compensation caught by SP boundary handleJobs=0 incidents: ErrESP_End UNHANDLED_ERROR_EVENT: Expected to throw an error event with the code 'SP_FAILED', but it was not caught. No error events are available in the scope.
+  cancelled 2251799813694829
+  --- element instances CTL final (pik=2251799813694829)
+    Start                            START_EVENT                COMPLETED
+    SP                               SUB_PROCESS                ACTIVE
+    SP_Start                         START_EVENT                COMPLETED
+    Reserve                          SERVICE_TASK               COMPLETED
+    Notify                           SERVICE_TASK               COMPLETED
+    Validate                         SERVICE_TASK               TERMINATED
+    ErrESP                           EVENT_SUB_PROCESS          ACTIVE
+    ErrESP_Start                     START_EVENT                COMPLETED
+    ErrESP_End                       END_EVENT                  ACTIVE
+== Summary
+
+check                                                                                      ok detail                                                                                                                                                      
+-----                                                                                      -- ------                                                                                                                                                      
+ALL-1 CancelReserve handler job created                                                  True jobs=1 vars={"reservationId":"R-42","spFailed":false,"caseId":"S2-ALL","noticeId":"N-7"}                                                                    
+ALL-2 RetractNotice handler job created (compensate all)                                 True jobs=1                                                                                                                                                      
+ALL-3 CompThrow waits for handlers (waitForCompletion)                                   True CompThrow=ACTIVE                                                                                                                                            
+ALL-4 (finding) SP_FAILED from inner error ESP NOT caught by boundary on SP -> incident  True incident: ErrESP_End UNHANDLED_ERROR_EVENT: Expected to throw an error event with the code 'SP_FAILED', but it was not caught. No error events are          
+                                                                                              available in the scope.                                                                                                                                     
+REF-1 CancelReserve handler job created                                                  True jobs=1 vars={"reservationId":"R-42","spFailed":false,"caseId":"S2-REF","noticeId":"N-7"}                                                                    
+REF-2 RetractNotice NOT created (activityRef=Reserve only)                               True jobs=0                                                                                                                                                      
+REF-3 CompThrow waits for handlers (waitForCompletion)                                   True CompThrow=ACTIVE                                                                                                                                            
+REF-4 (finding) SP_FAILED from inner error ESP NOT caught by boundary on SP -> incident  True incident: ErrESP_End UNHANDLED_ERROR_EVENT: Expected to throw an error event with the code 'SP_FAILED', but it was not caught. No error events are          
+                                                                                              available in the scope.                                                                                                                                     
+ROOTESP-1 CancelReserve handler job created                                              True jobs=1 vars={"reservationId":"R-42","spFailed":false,"caseId":"S2-ROOTESP","noticeId":"N-7"}                                                                
+ROOTESP-2 RetractNotice handler job created (compensate all)                             True jobs=1                                                                                                                                                      
+ROOTESP-3 CompThrow waits for handlers (waitForCompletion)                               True CompThrow=ACTIVE                                                                                                                                            
+ROOTESP-4 failure path reached -> spike-s2-root-handle job                              False                                                                                                                                                             
+ROOTESP-5 PI COMPLETED via RootErrESP_End, End_OK not reached, no incidents             False RootErrESP_End=0 End_OK=0 incidents=1                                                                                                                       
+FLAG-1 CancelReserve handler job created                                                 True jobs=1 vars={"reservationId":"R-42","spFailed":false,"caseId":"S2-FLAG"}                                                                                    
+FLAG-3 CompThrow waits for handlers (waitForCompletion)                                  True CompThrow=ACTIVE                                                                                                                                            
+FLAG-4 failure path reached -> spike-s2-handle job                                       True                                                                                                                                                             
+FLAG-5 PI COMPLETED via End_Failed, End_OK not reached, no incidents                     True End_Failed=1 End_OK=0 incidents=0                                                                                                                           
+BND-1 CancelReserve handler job created                                                 False jobs=0 vars=                                                                                                                                                
+BND-3 CompThrowRoot waits for handlers (waitForCompletion)                              False CompThrowRoot=COMPLETED                                                                                                                                     
+BND-4 failure path reached -> spike-s2-handle job                                        True                                                                                                                                                             
+BND-5 PI COMPLETED via End_Failed, End_OK not reached, no incidents                      True End_Failed=1 End_OK=0 incidents=0                                                                                                                           
+CTL-1 (info) rethrow from error ESP WITHOUT compensation caught by SP boundary          False handleJobs=0 incidents: ErrESP_End UNHANDLED_ERROR_EVENT: Expected to throw an error event with the code 'SP_FAILED', but it was not caught. No error       
+                                                                                              events are available in the scope.
+**********************
+Windows PowerShell transcript end
+End time: 20261031174125
+**********************

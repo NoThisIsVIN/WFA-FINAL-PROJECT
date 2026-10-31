@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:zeebe="http://camunda.org/schema/zeebe/1.0"
+                  xmlns:modeler="http://camunda.org/schema/modeler/1.0"
+                  id="Defs_S12" targetNamespace="http://gridconnect.example/spikes"
+                  exporter="hand-written" exporterVersion="1"
+                  modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <bpmn:process id="spike-s12-collapsed" name="S12 collapsed drill-down" isExecutable="true">
+    <bpmn:startEvent id="Start_S12" name="Start">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:subProcess id="Sub_Outer" name="Outer stage (collapsed)">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+      <bpmn:startEvent id="Start_Outer" name="Outer start">
+        <bpmn:outgoing>Flow_O1</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:subProcess id="Sub_Inner" name="Inner stage (collapsed)">
+        <bpmn:incoming>Flow_O1</bpmn:incoming>
+        <bpmn:outgoing>Flow_O2</bpmn:outgoing>
+        <bpmn:startEvent id="Start_Inner" name="Inner start">
+          <bpmn:outgoing>Flow_I1</bpmn:outgoing>
+        </bpmn:startEvent>
+        <bpmn:serviceTask id="Task_Wait" name="Wait here">
+          <bpmn:extensionElements>
+            <zeebe:taskDefinition type="spike-s12-wait" />
+          </bpmn:extensionElements>
+          <bpmn:incoming>Flow_I1</bpmn:incoming>
+          <bpmn:outgoing>Flow_I2</bpmn:outgoing>
+        </bpmn:serviceTask>
+        <bpmn:endEvent id="End_Inner" name="Inner end">
+          <bpmn:incoming>Flow_I2</bpmn:incoming>
+        </bpmn:endEvent>
+        <bpmn:sequenceFlow id="Flow_I1" sourceRef="Start_Inner" targetRef="Task_Wait" />
+        <bpmn:sequenceFlow id="Flow_I2" sourceRef="Task_Wait" targetRef="End_Inner" />
+      </bpmn:subProcess>
+      <bpmn:endEvent id="End_Outer" name="Outer end">
+        <bpmn:incoming>Flow_O2</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_O1" sourceRef="Start_Outer" targetRef="Sub_Inner" />
+      <bpmn:sequenceFlow id="Flow_O2" sourceRef="Sub_Inner" targetRef="End_Outer" />
+    </bpmn:subProcess>
+    <bpmn:endEvent id="End_S12" name="Done">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="Start_S12" targetRef="Sub_Outer" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Sub_Outer" targetRef="End_S12" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_Root">
+    <bpmndi:BPMNPlane id="Plane_Root" bpmnElement="spike-s12-collapsed">
+      <bpmndi:BPMNShape id="Start_S12_di" bpmnElement="Start_S12">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Sub_Outer_di" bpmnElement="Sub_Outer" isExpanded="false">
+        <dc:Bounds x="240" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_S12_di" bpmnElement="End_S12">
+        <dc:Bounds x="392" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="240" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="392" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="Diagram_Outer">
+    <bpmndi:BPMNPlane id="Plane_Outer" bpmnElement="Sub_Outer">
+      <bpmndi:BPMNShape id="Start_Outer_di" bpmnElement="Start_Outer">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Sub_Inner_di" bpmnElement="Sub_Inner" isExpanded="false">
+        <dc:Bounds x="240" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Outer_di" bpmnElement="End_Outer">
+        <dc:Bounds x="392" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_O1_di" bpmnElement="Flow_O1">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="240" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_O2_di" bpmnElement="Flow_O2">
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="392" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="Diagram_Inner">
+    <bpmndi:BPMNPlane id="Plane_Inner" bpmnElement="Sub_Inner">
+      <bpmndi:BPMNShape id="Start_Inner_di" bpmnElement="Start_Inner">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Wait_di" bpmnElement="Task_Wait">
+        <dc:Bounds x="240" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Inner_di" bpmnElement="End_Inner">
+        <dc:Bounds x="392" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_I1_di" bpmnElement="Flow_I1">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="240" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_I2_di" bpmnElement="Flow_I2">
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="392" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,142 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20261031175921
+Username: VINS-ZEPHY\vines
+RunAs User: VINS-ZEPHY\vines
+Configuration Name: 
+Machine: VINS-ZEPHY (Microsoft Windows NT 10.0.26300.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File C:\Users\vines\OneDrive\Documents\WFA final\spikes\S04-inclusive-join\run.ps1
+Process ID: 36240
+PSVersion: 5.1.26100.9711
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9711
+BuildVersion: 10.0.26100.9711
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+== Deploy
+  deployed spike-s4-inclusive-join v1 key=2251799813696403
+== ONE : vars={"needC":false,"needB":false,"needA":true,"fastC":false} expect=A
+  started spike-s4-inclusive-join pik=2251799813696744
+  [PASS] ONE-1 exactly branches [A] activated unexpectedJobs=0
+  [PASS] ONE-3 join fires exactly once after the taken branches afterJobs=1
+  [PASS] ONE-4 PI COMPLETED, no second After, no incidents joinInstances=1
+  --- element instances ONE final (pik=2251799813696744)
+    Start                            START_EVENT                COMPLETED
+    Fork                             INCLUSIVE_GATEWAY          COMPLETED
+    TaskA                            SERVICE_TASK               COMPLETED
+    Join                             INCLUSIVE_GATEWAY          COMPLETED
+    After                            SERVICE_TASK               COMPLETED
+    End                              END_EVENT                  COMPLETED
+== TWO : vars={"needC":false,"needB":true,"needA":true,"fastC":false} expect=A,B
+  started spike-s4-inclusive-join pik=2251799813696783
+  [PASS] TWO-1 exactly branches [A,B] activated unexpectedJobs=0
+  [PASS] TWO-2.1 join waits (no After job) with 1 branch(es) pending
+  [PASS] TWO-3 join fires exactly once after the taken branches afterJobs=1
+  [PASS] TWO-4 PI COMPLETED, no second After, no incidents joinInstances=1
+  --- element instances TWO final (pik=2251799813696783)
+    Start                            START_EVENT                COMPLETED
+    Fork                             INCLUSIVE_GATEWAY          COMPLETED
+    TaskB                            SERVICE_TASK               COMPLETED
+    TaskA                            SERVICE_TASK               COMPLETED
+    Join                             INCLUSIVE_GATEWAY          COMPLETED
+    After                            SERVICE_TASK               COMPLETED
+    End                              END_EVENT                  COMPLETED
+== NONE : vars={"needC":false,"needB":false,"needA":false,"fastC":false} expect=D
+  started spike-s4-inclusive-join pik=2251799813696830
+  [PASS] NONE-1 exactly branches [D] activated unexpectedJobs=0
+  [PASS] NONE-3 join fires exactly once after the taken branches afterJobs=1
+  [PASS] NONE-4 PI COMPLETED, no second After, no incidents joinInstances=1
+  --- element instances NONE final (pik=2251799813696830)
+    Start                            START_EVENT                COMPLETED
+    Fork                             INCLUSIVE_GATEWAY          COMPLETED
+    TaskDefault                      SERVICE_TASK               COMPLETED
+    Join                             INCLUSIVE_GATEWAY          COMPLETED
+    After                            SERVICE_TASK               COMPLETED
+    End                              END_EVENT                  COMPLETED
+== C-FULL : vars={"needC":true,"needB":true,"needA":false,"fastC":false} expect=B,C
+  started spike-s4-inclusive-join pik=2251799813696872
+  [PASS] C-FULL-1 exactly branches [B,C] activated unexpectedJobs=0
+  [PASS] C-FULL-2.1 join waits (no After job) with 1 branch(es) pending
+  [PASS] C-FULL-3 join fires exactly once after the taken branches afterJobs=1
+  [PASS] C-FULL-4 PI COMPLETED, no second After, no incidents joinInstances=1
+  --- element instances C-FULL final (pik=2251799813696872)
+    Start                            START_EVENT                COMPLETED
+    Fork                             INCLUSIVE_GATEWAY          COMPLETED
+    XorC                             EXCLUSIVE_GATEWAY          COMPLETED
+    TaskB                            SERVICE_TASK               COMPLETED
+    TaskC                            SERVICE_TASK               COMPLETED
+    Join                             INCLUSIVE_GATEWAY          COMPLETED
+    After                            SERVICE_TASK               COMPLETED
+    End                              END_EVENT                  COMPLETED
+== C-FAST : vars={"needC":true,"needB":false,"needA":true,"fastC":true} expect=A
+  started spike-s4-inclusive-join pik=2251799813696929
+  [PASS] C-FAST-1 exactly branches [A] activated unexpectedJobs=0
+  [PASS] C-FAST-2.0 join waits (no After job) with 1 branch(es) pending
+  [PASS] C-FAST-3 join fires exactly once after the taken branches afterJobs=1
+  [PASS] C-FAST-4 PI COMPLETED, no second After, no incidents joinInstances=1
+  --- element instances C-FAST final (pik=2251799813696929)
+    Start                            START_EVENT                COMPLETED
+    Fork                             INCLUSIVE_GATEWAY          COMPLETED
+    XorC                             EXCLUSIVE_GATEWAY          COMPLETED
+    TaskA                            SERVICE_TASK               COMPLETED
+    Join                             INCLUSIVE_GATEWAY          COMPLETED
+    After                            SERVICE_TASK               COMPLETED
+    End                              END_EVENT                  COMPLETED
+== ALL3 : vars={"needC":true,"needB":true,"needA":true,"fastC":false} expect=A,B,C
+  started spike-s4-inclusive-join pik=2251799813696978
+  [PASS] ALL3-1 exactly branches [A,B,C] activated unexpectedJobs=0
+  [PASS] ALL3-2.1 join waits (no After job) with 2 branch(es) pending
+  [PASS] ALL3-2.2 join waits (no After job) with 1 branch(es) pending
+  [PASS] ALL3-3 join fires exactly once after the taken branches afterJobs=1
+  [PASS] ALL3-4 PI COMPLETED, no second After, no incidents joinInstances=1
+  --- element instances ALL3 final (pik=2251799813696978)
+    Start                            START_EVENT                COMPLETED
+    Fork                             INCLUSIVE_GATEWAY          COMPLETED
+    XorC                             EXCLUSIVE_GATEWAY          COMPLETED
+    TaskB                            SERVICE_TASK               COMPLETED
+    TaskA                            SERVICE_TASK               COMPLETED
+    TaskC                            SERVICE_TASK               COMPLETED
+    Join                             INCLUSIVE_GATEWAY          COMPLETED
+    After                            SERVICE_TASK               COMPLETED
+    End                              END_EVENT                  COMPLETED
+== MISSING variable (needB absent) - does the fork raise an incident?
+  started spike-s4-inclusive-join pik=2251799813697038
+  [PASS] MISS-1 (info) absent condition variable incidents=0
+  A jobs=1 After jobs=1
+  [PASS] MISS-2 (info) absent var treated as not-true: only A taken, PI completes
+== Summary
+
+check                                                                      ok detail          
+-----                                                                      -- ------          
+ONE-1 exactly branches [A] activated                                     True unexpectedJobs=0
+ONE-3 join fires exactly once after the taken branches                   True afterJobs=1     
+ONE-4 PI COMPLETED, no second After, no incidents                        True joinInstances=1 
+TWO-1 exactly branches [A,B] activated                                   True unexpectedJobs=0
+TWO-2.1 join waits (no After job) with 1 branch(es) pending              True                 
+TWO-3 join fires exactly once after the taken branches                   True afterJobs=1     
+TWO-4 PI COMPLETED, no second After, no incidents                        True joinInstances=1 
+NONE-1 exactly branches [D] activated                                    True unexpectedJobs=0
+NONE-3 join fires exactly once after the taken branches                  True afterJobs=1     
+NONE-4 PI COMPLETED, no second After, no incidents                       True joinInstances=1 
+C-FULL-1 exactly branches [B,C] activated                                True unexpectedJobs=0
+C-FULL-2.1 join waits (no After job) with 1 branch(es) pending           True                 
+C-FULL-3 join fires exactly once after the taken branches                True afterJobs=1     
+C-FULL-4 PI COMPLETED, no second After, no incidents                     True joinInstances=1 
+C-FAST-1 exactly branches [A] activated                                  True unexpectedJobs=0
+C-FAST-2.0 join waits (no After job) with 1 branch(es) pending           True                 
+C-FAST-3 join fires exactly once after the taken branches                True afterJobs=1     
+C-FAST-4 PI COMPLETED, no second After, no incidents                     True joinInstances=1 
+ALL3-1 exactly branches [A,B,C] activated                                True unexpectedJobs=0
+ALL3-2.1 join waits (no After job) with 2 branch(es) pending             True                 
+ALL3-2.2 join waits (no After job) with 1 branch(es) pending             True                 
+ALL3-3 join fires exactly once after the taken branches                  True afterJobs=1     
+ALL3-4 PI COMPLETED, no second After, no incidents                       True joinInstances=1 
+MISS-1 (info) absent condition variable                                  True incidents=0     
+MISS-2 (info) absent var treated as not-true: only A taken, PI completes True
+**********************
+Windows PowerShell transcript end
+End time: 20261031180103
+**********************

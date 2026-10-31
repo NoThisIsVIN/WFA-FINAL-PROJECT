@@ -1,0 +1,14 @@
+{
+  "name": "gridconnect-solar-approval",
+  "private": true,
+  "description": "Lint tooling for the BPMN/DMN models (the React app lives in frontend/)",
+  "scripts": {
+    "lint:bpmn": "bpmnlint camunda/bpmn/*.bpmn",
+    "lint:spikes": "bpmnlint spikes/**/*.bpmn"
+  },
+  "devDependencies": {
+    "bpmnlint": "12.0.0",
+    "bpmnlint-plugin-camunda-compat": "2.63.0",
+    "zeebe-bpmn-moddle": "2.0.0"
+  }
+}

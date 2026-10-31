@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Defs_S3n" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.40.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <bpmn:message id="Msg_Withdraw" name="spike-withdraw">
+    <bpmn:extensionElements><zeebe:subscription correlationKey="=caseId" /></bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:process id="spike-s3-comp-root-esp-nonint" name="Spike S3 variant - NON-interrupting root message ESP + terminate end" isExecutable="true">
+    <bpmn:startEvent id="Start" name="Start">
+      <bpmn:outgoing>Flow_Start_SP1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:subProcess id="SP1" name="Assessment sub-process">
+      <bpmn:incoming>Flow_Start_SP1</bpmn:incoming>
+      <bpmn:outgoing>Flow_SP1_Reserve</bpmn:outgoing>
+      <bpmn:startEvent id="SP1_Start" name="SP1 start">
+        <bpmn:outgoing>Flow_SP1Start_Survey</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:serviceTask id="Survey" name="Site survey">
+        <bpmn:extensionElements><zeebe:taskDefinition type="spike-s3-survey" /></bpmn:extensionElements>
+        <bpmn:incoming>Flow_SP1Start_Survey</bpmn:incoming>
+        <bpmn:outgoing>Flow_Survey_Design</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:boundaryEvent id="Survey_Comp" name="Compensate survey" attachedToRef="Survey">
+        <bpmn:compensateEventDefinition id="CompDef_Survey" />
+      </bpmn:boundaryEvent>
+      <bpmn:serviceTask id="UndoSurvey" name="Undo survey" isForCompensation="true">
+        <bpmn:extensionElements><zeebe:taskDefinition type="spike-s3-undo-survey" /></bpmn:extensionElements>
+      </bpmn:serviceTask>
+      <bpmn:serviceTask id="Design" name="Design">
+        <bpmn:extensionElements><zeebe:taskDefinition type="spike-s3-design" /></bpmn:extensionElements>
+        <bpmn:incoming>Flow_Survey_Design</bpmn:incoming>
+        <bpmn:outgoing>Flow_Design_SP1End</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:boundaryEvent id="Design_Comp" name="Compensate design" attachedToRef="Design">
+        <bpmn:compensateEventDefinition id="CompDef_Design" />
+      </bpmn:boundaryEvent>
+      <bpmn:serviceTask id="UndoDesign" name="Undo design" isForCompensation="true">
+        <bpmn:extensionElements><zeebe:taskDefinition type="spike-s3-undo-design" /></bpmn:extensionElements>
+      </bpmn:serviceTask>
+      <bpmn:endEvent id="SP1_End" name="SP1 end">
+        <bpmn:incoming>Flow_Design_SP1End</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_SP1Start_Survey" sourceRef="SP1_Start" targetRef="Survey" />
+      <bpmn:sequenceFlow id="Flow_Survey_Design" sourceRef="Survey" targetRef="Design" />
+      <bpmn:sequenceFlow id="Flow_Design_SP1End" sourceRef="Design" targetRef="SP1_End" />
+      <bpmn:association id="Assoc_Survey" associationDirection="One" sourceRef="Survey_Comp" targetRef="UndoSurvey" />
+      <bpmn:association id="Assoc_Design" associationDirection="One" sourceRef="Design_Comp" targetRef="UndoDesign" />
+    </bpmn:subProcess>
+    <bpmn:serviceTask id="Reserve" name="Reserve capacity (root)">
+      <bpmn:extensionElements><zeebe:taskDefinition type="spike-s3-reserve" /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_SP1_Reserve</bpmn:incoming>
+      <bpmn:outgoing>Flow_Reserve_Await</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="Reserve_Comp" name="Compensate reserve" attachedToRef="Reserve">
+      <bpmn:compensateEventDefinition id="CompDef_Reserve" />
+    </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="UndoReserve" name="Undo reserve" isForCompensation="true">
+      <bpmn:extensionElements><zeebe:taskDefinition type="spike-s3-undo-reserve" /></bpmn:extensionElements>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Await" name="Await decision (wait)">
+      <bpmn:extensionElements><zeebe:taskDefinition type="spike-s3-await" /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Reserve_Await</bpmn:incoming>
+      <bpmn:outgoing>Flow_Await_End</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="Await_Comp" name="Compensate await" attachedToRef="Await">
+      <bpmn:compensateEventDefinition id="CompDef_Await" />
+    </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="UndoAwait" name="Undo await (must NOT run)" isForCompensation="true">
+      <bpmn:extensionElements><zeebe:taskDefinition type="spike-s3-undo-await" /></bpmn:extensionElements>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End" name="End">
+      <bpmn:incoming>Flow_Await_End</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_SP1" sourceRef="Start" targetRef="SP1" />
+    <bpmn:sequenceFlow id="Flow_SP1_Reserve" sourceRef="SP1" targetRef="Reserve" />
+    <bpmn:sequenceFlow id="Flow_Reserve_Await" sourceRef="Reserve" targetRef="Await" />
+    <bpmn:sequenceFlow id="Flow_Await_End" sourceRef="Await" targetRef="End" />
+    <bpmn:subProcess id="WithdrawESP" name="Withdrawal" triggeredByEvent="true">
+      <bpmn:startEvent id="Withdraw_Start" name="Withdraw received" isInterrupting="false">
+        <bpmn:outgoing>Flow_Withdraw_Comp</bpmn:outgoing>
+        <bpmn:messageEventDefinition id="MsgDef_Withdraw" messageRef="Msg_Withdraw" />
+      </bpmn:startEvent>
+      <bpmn:intermediateThrowEvent id="CompThrowAll" name="Compensate all">
+        <bpmn:incoming>Flow_Withdraw_Comp</bpmn:incoming>
+        <bpmn:outgoing>Flow_Comp_WEnd</bpmn:outgoing>
+        <bpmn:compensateEventDefinition id="CompDef_All" waitForCompletion="true" />
+      </bpmn:intermediateThrowEvent>
+      <bpmn:endEvent id="Withdraw_End" name="Withdrawn (terminate)">
+        <bpmn:incoming>Flow_Comp_WEnd</bpmn:incoming>
+        <bpmn:terminateEventDefinition id="TermDef_Withdraw" />
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_Withdraw_Comp" sourceRef="Withdraw_Start" targetRef="CompThrowAll" />
+      <bpmn:sequenceFlow id="Flow_Comp_WEnd" sourceRef="CompThrowAll" targetRef="Withdraw_End" />
+    </bpmn:subProcess>
+    <bpmn:association id="Assoc_Reserve" associationDirection="One" sourceRef="Reserve_Comp" targetRef="UndoReserve" />
+    <bpmn:association id="Assoc_Await" associationDirection="One" sourceRef="Await_Comp" targetRef="UndoAwait" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_S3">
+    <bpmndi:BPMNPlane id="Plane_S3" bpmnElement="spike-s3-comp-root-esp-nonint">
+      <bpmndi:BPMNShape id="Start_di" bpmnElement="Start"><dc:Bounds x="152" y="182" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP1_di" bpmnElement="SP1" isExpanded="true"><dc:Bounds x="230" y="80" width="420" height="260" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP1_Start_di" bpmnElement="SP1_Start"><dc:Bounds x="262" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Survey_di" bpmnElement="Survey"><dc:Bounds x="330" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Survey_Comp_di" bpmnElement="Survey_Comp"><dc:Bounds x="362" y="182" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UndoSurvey_di" bpmnElement="UndoSurvey"><dc:Bounds x="330" y="250" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Design_di" bpmnElement="Design"><dc:Bounds x="480" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Design_Comp_di" bpmnElement="Design_Comp"><dc:Bounds x="512" y="182" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UndoDesign_di" bpmnElement="UndoDesign"><dc:Bounds x="480" y="250" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SP1_End_di" bpmnElement="SP1_End"><dc:Bounds x="602" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Reserve_di" bpmnElement="Reserve"><dc:Bounds x="710" y="160" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Reserve_Comp_di" bpmnElement="Reserve_Comp"><dc:Bounds x="742" y="222" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UndoReserve_di" bpmnElement="UndoReserve"><dc:Bounds x="710" y="290" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Await_di" bpmnElement="Await"><dc:Bounds x="870" y="160" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Await_Comp_di" bpmnElement="Await_Comp"><dc:Bounds x="902" y="222" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UndoAwait_di" bpmnElement="UndoAwait"><dc:Bounds x="870" y="290" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_di" bpmnElement="End"><dc:Bounds x="1032" y="182" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="WithdrawESP_di" bpmnElement="WithdrawESP" isExpanded="true"><dc:Bounds x="230" y="420" width="420" height="140" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Withdraw_Start_di" bpmnElement="Withdraw_Start"><dc:Bounds x="262" y="472" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CompThrowAll_di" bpmnElement="CompThrowAll"><dc:Bounds x="392" y="472" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Withdraw_End_di" bpmnElement="Withdraw_End"><dc:Bounds x="542" y="472" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_SP1_di" bpmnElement="Flow_Start_SP1"><di:waypoint x="188" y="200" /><di:waypoint x="230" y="200" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SP1Start_Survey_di" bpmnElement="Flow_SP1Start_Survey"><di:waypoint x="298" y="160" /><di:waypoint x="330" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Survey_Design_di" bpmnElement="Flow_Survey_Design"><di:waypoint x="430" y="160" /><di:waypoint x="480" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Design_SP1End_di" bpmnElement="Flow_Design_SP1End"><di:waypoint x="580" y="160" /><di:waypoint x="602" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Assoc_Survey_di" bpmnElement="Assoc_Survey"><di:waypoint x="380" y="218" /><di:waypoint x="380" y="250" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Assoc_Design_di" bpmnElement="Assoc_Design"><di:waypoint x="530" y="218" /><di:waypoint x="530" y="250" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SP1_Reserve_di" bpmnElement="Flow_SP1_Reserve"><di:waypoint x="650" y="200" /><di:waypoint x="710" y="200" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Reserve_Await_di" bpmnElement="Flow_Reserve_Await"><di:waypoint x="810" y="200" /><di:waypoint x="870" y="200" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Await_End_di" bpmnElement="Flow_Await_End"><di:waypoint x="970" y="200" /><di:waypoint x="1032" y="200" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Assoc_Reserve_di" bpmnElement="Assoc_Reserve"><di:waypoint x="760" y="258" /><di:waypoint x="760" y="290" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Assoc_Await_di" bpmnElement="Assoc_Await"><di:waypoint x="920" y="258" /><di:waypoint x="920" y="290" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Withdraw_Comp_di" bpmnElement="Flow_Withdraw_Comp"><di:waypoint x="298" y="490" /><di:waypoint x="392" y="490" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Comp_WEnd_di" bpmnElement="Flow_Comp_WEnd"><di:waypoint x="428" y="490" /><di:waypoint x="542" y="490" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

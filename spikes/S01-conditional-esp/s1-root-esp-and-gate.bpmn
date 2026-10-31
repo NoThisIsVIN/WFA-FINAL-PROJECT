@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Defs_S1b" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.40.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <bpmn:process id="spike-s1-root-esp-and-gate" name="Spike S1 root conditional ESP + conditional gate" isExecutable="true">
+    <bpmn:startEvent id="Start" name="Start">
+      <bpmn:outgoing>Flow_Start_Gate</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:intermediateCatchEvent id="EmergencyGate" name="Grid emergency cleared">
+      <bpmn:incoming>Flow_Start_Gate</bpmn:incoming>
+      <bpmn:outgoing>Flow_Gate_Wait</bpmn:outgoing>
+      <bpmn:conditionalEventDefinition id="CondDef_Gate">
+        <bpmn:extensionElements>
+          <zeebe:conditionalFilter variableEvents="create, update" />
+        </bpmn:extensionElements>
+        <bpmn:condition xsi:type="bpmn:tFormalExpression">=gridEmergency = false</bpmn:condition>
+      </bpmn:conditionalEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Wait2" name="Work after gate">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="spike-s1-wait2" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Gate_Wait</bpmn:incoming>
+      <bpmn:outgoing>Flow_Wait_End</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End" name="End">
+      <bpmn:incoming>Flow_Wait_End</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_Gate" sourceRef="Start" targetRef="EmergencyGate" />
+    <bpmn:sequenceFlow id="Flow_Gate_Wait" sourceRef="EmergencyGate" targetRef="Wait2" />
+    <bpmn:sequenceFlow id="Flow_Wait_End" sourceRef="Wait2" targetRef="End" />
+    <bpmn:subProcess id="RootESP" name="Root conditional ESP" triggeredByEvent="true">
+      <bpmn:startEvent id="RootESP_Start" name="Flag set" isInterrupting="false">
+        <bpmn:outgoing>Flow_RootStart_Task</bpmn:outgoing>
+        <bpmn:conditionalEventDefinition id="CondDef_Root">
+          <bpmn:condition xsi:type="bpmn:tFormalExpression">=flag = true</bpmn:condition>
+        </bpmn:conditionalEventDefinition>
+      </bpmn:startEvent>
+      <bpmn:serviceTask id="RootEspTask" name="Root ESP work">
+        <bpmn:extensionElements>
+          <zeebe:taskDefinition type="spike-s1-rootesp" />
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_RootStart_Task</bpmn:incoming>
+        <bpmn:outgoing>Flow_RootTask_End</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:endEvent id="RootESP_End" name="Root ESP done">
+        <bpmn:incoming>Flow_RootTask_End</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_RootStart_Task" sourceRef="RootESP_Start" targetRef="RootEspTask" />
+      <bpmn:sequenceFlow id="Flow_RootTask_End" sourceRef="RootEspTask" targetRef="RootESP_End" />
+    </bpmn:subProcess>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_S1b">
+    <bpmndi:BPMNPlane id="Plane_S1b" bpmnElement="spike-s1-root-esp-and-gate">
+      <bpmndi:BPMNShape id="Start_di" bpmnElement="Start"><dc:Bounds x="152" y="102" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EmergencyGate_di" bpmnElement="EmergencyGate"><dc:Bounds x="252" y="102" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Wait2_di" bpmnElement="Wait2"><dc:Bounds x="350" y="80" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_di" bpmnElement="End"><dc:Bounds x="512" y="102" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RootESP_di" bpmnElement="RootESP" isExpanded="true"><dc:Bounds x="150" y="220" width="400" height="160" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RootESP_Start_di" bpmnElement="RootESP_Start"><dc:Bounds x="182" y="282" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RootEspTask_di" bpmnElement="RootEspTask"><dc:Bounds x="290" y="260" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RootESP_End_di" bpmnElement="RootESP_End"><dc:Bounds x="462" y="282" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_Gate_di" bpmnElement="Flow_Start_Gate"><di:waypoint x="188" y="120" /><di:waypoint x="252" y="120" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Gate_Wait_di" bpmnElement="Flow_Gate_Wait"><di:waypoint x="288" y="120" /><di:waypoint x="350" y="120" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Wait_End_di" bpmnElement="Flow_Wait_End"><di:waypoint x="450" y="120" /><di:waypoint x="512" y="120" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_RootStart_Task_di" bpmnElement="Flow_RootStart_Task"><di:waypoint x="218" y="300" /><di:waypoint x="290" y="300" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_RootTask_End_di" bpmnElement="Flow_RootTask_End"><di:waypoint x="390" y="300" /><di:waypoint x="462" y="300" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
