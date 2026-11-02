@@ -2,7 +2,7 @@
 
 | Folder | Contents |
 |---|---|
-| `processes/` | BPMN processes (main approval, smart meter + tariff contract) |
+| `bpmn/` | BPMN processes (main approval, smart meter + tariff contract) |
 | `decisions/` | DMN decision tables |
 | `forms/` | Camunda forms for user tasks |
 | `diagrams/` | PNG exports for the report |
