@@ -37,7 +37,7 @@
       <bpmn:outgoing>Flow_S_Signed_S_Join</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_49" messageRef="Msg_Signed" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:intermediateCatchEvent id="S_Declined" name="Declined (F26)">
+    <bpmn:intermediateCatchEvent id="S_Declined" name="Declined">
       <bpmn:incoming>Flow_S_Wait_S_Declined</bpmn:incoming>
       <bpmn:outgoing>Flow_S_Declined_S_EndDeclined</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_50" messageRef="Msg_Declined" />
@@ -46,7 +46,7 @@
       <bpmn:incoming>Flow_S_Declined_S_EndDeclined</bpmn:incoming>
       <bpmn:errorEventDefinition id="ErrorEventDefinition_51" errorRef="Error_Declined" />
     </bpmn:endEvent>
-    <bpmn:intermediateCatchEvent id="S_Timeout" name="No signature (F25)">
+    <bpmn:intermediateCatchEvent id="S_Timeout" name="No signature">
       <bpmn:incoming>Flow_S_Wait_S_Timeout</bpmn:incoming>
       <bpmn:outgoing>Flow_S_Timeout_S_EndExpired</bpmn:outgoing>
       <bpmn:timerEventDefinition id="TimerEventDefinition_52"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">=timers.signature</bpmn:timeDuration></bpmn:timerEventDefinition>
@@ -84,7 +84,7 @@
     <bpmn:sequenceFlow id="Flow_S_Activate_S_End" sourceRef="S_Activate" targetRef="S_End" />
     <bpmn:textAnnotation id="Note_Meter"><bpmn:text>Q25 call activity target: Smart Meter Installation &amp; Feed-in Tariff Contract.
 Meter installation and contract signing run in parallel. The signed contract comes back through a webhook (HMAC checked).
-F25 not signed in time -&gt; error CONTRACT_EXPIRED to the parent.  F26 declined -&gt; error CONTRACT_DECLINED, the parent connects without selling power.</bpmn:text></bpmn:textAnnotation>
+Not signed in time -&gt; error CONTRACT_EXPIRED to the parent.  Declined -&gt; error CONTRACT_DECLINED, the parent connects without selling power.</bpmn:text></bpmn:textAnnotation>
   </bpmn:process>
   <bpmn:message id="Msg_Signed" name="contract-signed"><bpmn:extensionElements><zeebe:subscription correlationKey="=applicationId" /></bpmn:extensionElements></bpmn:message>
   <bpmn:message id="Msg_Declined" name="contract-declined"><bpmn:extensionElements><zeebe:subscription correlationKey="=applicationId" /></bpmn:extensionElements></bpmn:message>
