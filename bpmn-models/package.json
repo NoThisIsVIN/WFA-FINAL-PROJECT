@@ -1,0 +1,13 @@
+{
+  "name": "solar-connection-approval",
+  "private": true,
+  "description": "Lint tooling for the BPMN models",
+  "scripts": {
+    "lint": "bpmnlint processes/*.bpmn"
+  },
+  "devDependencies": {
+    "bpmnlint": "12.0.0",
+    "bpmnlint-plugin-camunda-compat": "2.63.0",
+    "zeebe-bpmn-moddle": "2.0.0"
+  }
+}

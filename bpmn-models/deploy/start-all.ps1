@@ -1,5 +1,5 @@
 # Starts the local stack: c8run 8.10 (Zeebe, Operate, Tasklist, Admin, connectors) and Mailpit.
-# Usage: powershell -File scripts\start-all.ps1 [-SkipMailpit]
+# Usage: powershell -File bpmn-models\deploy\start-all.ps1 [-SkipMailpit]
 param(
     [string]$CamundaHome = 'C:\Users\vines\camunda',
     [switch]$SkipMailpit
