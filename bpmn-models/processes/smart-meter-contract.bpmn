@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" id="smart-meter-contract-definitions" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.49.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <bpmn:process id="smart-meter-contract" name="Smart meter + tariff contract" isExecutable="true">
+    <bpmn:extensionElements><zeebe:versionTag value="1.0.0" /></bpmn:extensionElements>
+    <bpmn:startEvent id="S_Start" name="Contract started">
+      <bpmn:outgoing>Flow_S_Start_S_Tariff</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:businessRuleTask id="S_Tariff" name="Pick tariff rate (DMN)">
+      <bpmn:extensionElements><zeebe:calledDecision decisionId="TariffRate" resultVariable="tariff" bindingType="deployment" /><zeebe:ioMapping><zeebe:input source="=today()" target="contractDate" /></zeebe:ioMapping></bpmn:extensionElements>
+      <bpmn:incoming>Flow_S_Start_S_Tariff</bpmn:incoming>
+      <bpmn:outgoing>Flow_S_Tariff_S_Fork</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+    <bpmn:parallelGateway id="S_Fork">
+      <bpmn:incoming>Flow_S_Tariff_S_Fork</bpmn:incoming>
+      <bpmn:outgoing>Flow_S_Fork_S_Install</bpmn:outgoing>
+      <bpmn:outgoing>Flow_S_Fork_S_Send</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:userTask id="S_Install" name="Install smart meter">
+      <bpmn:extensionElements><zeebe:userTask /><zeebe:formDefinition formId="meter-install" bindingType="deployment" /><zeebe:assignmentDefinition candidateGroups="meter-technicians" /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_S_Fork_S_Install</bpmn:incoming>
+      <bpmn:outgoing>Flow_S_Install_S_Join</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sendTask id="S_Send" name="Send contract for e-sign">
+      <bpmn:extensionElements><zeebe:taskDefinition type="esign-send" /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_S_Fork_S_Send</bpmn:incoming>
+      <bpmn:outgoing>Flow_S_Send_S_Wait</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:eventBasedGateway id="S_Wait">
+      <bpmn:incoming>Flow_S_Send_S_Wait</bpmn:incoming>
+      <bpmn:outgoing>Flow_S_Wait_S_Signed</bpmn:outgoing>
+      <bpmn:outgoing>Flow_S_Wait_S_Declined</bpmn:outgoing>
+      <bpmn:outgoing>Flow_S_Wait_S_Timeout</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="S_Signed" name="Signed (webhook)" zeebe:modelerTemplate="io.camunda.connectors.webhook.WebhookConnectorIntermediate.v1" zeebe:modelerTemplateVersion="16">
+      <bpmn:extensionElements><zeebe:properties><zeebe:property name="inbound.type" value="io.camunda:webhook:1" /><zeebe:property name="inbound.method" value="post" /><zeebe:property name="inbound.context" value="mcp-esign-callback" /><zeebe:property name="inbound.shouldValidateHmac" value="enabled" /><zeebe:property name="inbound.hmacSecret" value="=secrets.ESIGN_HMAC_SECRET" /><zeebe:property name="inbound.hmacHeader" value="X-Signature" /><zeebe:property name="inbound.hmacAlgorithm" value="sha_256" /><zeebe:property name="inbound.auth.type" value="NONE" /><zeebe:property name="activationCondition" value="=request.body.status = &quot;SIGNED&quot;" /><zeebe:property name="consumeUnmatchedEvents" value="false" /><zeebe:property name="synchronousResponse" value="false" /><zeebe:property name="correlationKeyExpression" value="=request.body.applicationId" /><zeebe:property name="messageIdExpression" value="=request.body.eventId" /><zeebe:property name="messageTtl" value="PT1H" /><zeebe:property name="deduplicationModeManualFlag" value="false" /><zeebe:property name="deduplicationMode" value="AUTO" /><zeebe:property name="resultExpression" value="={esignStatus: request.body.status, signedAt: request.body.signedAt}" /></zeebe:properties></bpmn:extensionElements>
+      <bpmn:incoming>Flow_S_Wait_S_Signed</bpmn:incoming>
+      <bpmn:outgoing>Flow_S_Signed_S_Join</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_49" messageRef="Msg_Signed" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="S_Declined" name="Declined (F26)">
+      <bpmn:incoming>Flow_S_Wait_S_Declined</bpmn:incoming>
+      <bpmn:outgoing>Flow_S_Declined_S_EndDeclined</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_50" messageRef="Msg_Declined" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:endEvent id="S_EndDeclined" name="Contract declined">
+      <bpmn:incoming>Flow_S_Declined_S_EndDeclined</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_51" errorRef="Error_Declined" />
+    </bpmn:endEvent>
+    <bpmn:intermediateCatchEvent id="S_Timeout" name="No signature (F25)">
+      <bpmn:incoming>Flow_S_Wait_S_Timeout</bpmn:incoming>
+      <bpmn:outgoing>Flow_S_Timeout_S_EndExpired</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_52"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">=timers.signature</bpmn:timeDuration></bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:endEvent id="S_EndExpired" name="Contract expired">
+      <bpmn:incoming>Flow_S_Timeout_S_EndExpired</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_53" errorRef="Error_Expired" />
+    </bpmn:endEvent>
+    <bpmn:parallelGateway id="S_Join">
+      <bpmn:incoming>Flow_S_Install_S_Join</bpmn:incoming>
+      <bpmn:incoming>Flow_S_Signed_S_Join</bpmn:incoming>
+      <bpmn:outgoing>Flow_S_Join_S_Activate</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:serviceTask id="S_Activate" name="Activate meter + tariff">
+      <bpmn:extensionElements><zeebe:taskDefinition type="meter-activate" retries="3" /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_S_Join_S_Activate</bpmn:incoming>
+      <bpmn:outgoing>Flow_S_Activate_S_End</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="S_End" name="Contract active">
+      <bpmn:incoming>Flow_S_Activate_S_End</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_S_Start_S_Tariff" sourceRef="S_Start" targetRef="S_Tariff" />
+    <bpmn:sequenceFlow id="Flow_S_Tariff_S_Fork" sourceRef="S_Tariff" targetRef="S_Fork" />
+    <bpmn:sequenceFlow id="Flow_S_Fork_S_Install" sourceRef="S_Fork" targetRef="S_Install" />
+    <bpmn:sequenceFlow id="Flow_S_Install_S_Join" sourceRef="S_Install" targetRef="S_Join" />
+    <bpmn:sequenceFlow id="Flow_S_Fork_S_Send" sourceRef="S_Fork" targetRef="S_Send" />
+    <bpmn:sequenceFlow id="Flow_S_Send_S_Wait" sourceRef="S_Send" targetRef="S_Wait" />
+    <bpmn:sequenceFlow id="Flow_S_Wait_S_Signed" sourceRef="S_Wait" targetRef="S_Signed" />
+    <bpmn:sequenceFlow id="Flow_S_Signed_S_Join" sourceRef="S_Signed" targetRef="S_Join" />
+    <bpmn:sequenceFlow id="Flow_S_Wait_S_Declined" sourceRef="S_Wait" targetRef="S_Declined" />
+    <bpmn:sequenceFlow id="Flow_S_Declined_S_EndDeclined" sourceRef="S_Declined" targetRef="S_EndDeclined" />
+    <bpmn:sequenceFlow id="Flow_S_Wait_S_Timeout" sourceRef="S_Wait" targetRef="S_Timeout" />
+    <bpmn:sequenceFlow id="Flow_S_Timeout_S_EndExpired" sourceRef="S_Timeout" targetRef="S_EndExpired" />
+    <bpmn:sequenceFlow id="Flow_S_Join_S_Activate" sourceRef="S_Join" targetRef="S_Activate" />
+    <bpmn:sequenceFlow id="Flow_S_Activate_S_End" sourceRef="S_Activate" targetRef="S_End" />
+    <bpmn:textAnnotation id="Note_Meter"><bpmn:text>Q25 call activity target: Smart Meter Installation &amp; Feed-in Tariff Contract.
+Meter installation and contract signing run in parallel. The signed contract comes back through a webhook (HMAC checked).
+F25 not signed in time -&gt; error CONTRACT_EXPIRED to the parent.  F26 declined -&gt; error CONTRACT_DECLINED, the parent connects without selling power.</bpmn:text></bpmn:textAnnotation>
+  </bpmn:process>
+  <bpmn:message id="Msg_Signed" name="contract-signed"><bpmn:extensionElements><zeebe:subscription correlationKey="=applicationId" /></bpmn:extensionElements></bpmn:message>
+  <bpmn:message id="Msg_Declined" name="contract-declined"><bpmn:extensionElements><zeebe:subscription correlationKey="=applicationId" /></bpmn:extensionElements></bpmn:message>
+  <bpmn:error id="Error_Declined" name="CONTRACT_DECLINED" errorCode="CONTRACT_DECLINED" />
+  <bpmn:error id="Error_Expired" name="CONTRACT_EXPIRED" errorCode="CONTRACT_EXPIRED" />
+  <bpmndi:BPMNDiagram id="Diagram_smart-meter-contract">
+    <bpmndi:BPMNPlane id="Plane_smart-meter-contract" bpmnElement="smart-meter-contract">
+      <bpmndi:BPMNShape id="S_Start_di" bpmnElement="S_Start" bioc:stroke="#2e7d32" bioc:fill="#e8f5e9" color:background-color="#e8f5e9" color:border-color="#2e7d32"><dc:Bounds x="202" y="322" width="36" height="36" /><bpmndi:BPMNLabel color:color="#2e7d32"><dc:Bounds x="170" y="362" width="100" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Tariff_di" bpmnElement="S_Tariff" bioc:stroke="#6a1b9a" bioc:fill="#f3e5f5" color:background-color="#f3e5f5" color:border-color="#6a1b9a"><dc:Bounds x="320" y="300" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Fork_di" bpmnElement="S_Fork" bioc:stroke="#37474f" bioc:fill="#ffffff" color:background-color="#ffffff" color:border-color="#37474f"><dc:Bounds x="495" y="315" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Install_di" bpmnElement="S_Install" bioc:stroke="#e65100" bioc:fill="#fff3e0" color:background-color="#fff3e0" color:border-color="#e65100"><dc:Bounds x="620" y="180" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Send_di" bpmnElement="S_Send" bioc:stroke="#455a64" bioc:fill="#eceff1" color:background-color="#eceff1" color:border-color="#455a64"><dc:Bounds x="620" y="420" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Wait_di" bpmnElement="S_Wait" bioc:stroke="#00838f" bioc:fill="#e0f7fa" color:background-color="#e0f7fa" color:border-color="#00838f"><dc:Bounds x="795" y="435" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Signed_di" bpmnElement="S_Signed" bioc:stroke="#00838f" bioc:fill="#e0f7fa" color:background-color="#e0f7fa" color:border-color="#00838f"><dc:Bounds x="952" y="442" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="920" y="482" width="100" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Declined_di" bpmnElement="S_Declined" bioc:stroke="#00838f" bioc:fill="#e0f7fa" color:background-color="#e0f7fa" color:border-color="#00838f"><dc:Bounds x="952" y="562" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="920" y="602" width="100" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_EndDeclined_di" bpmnElement="S_EndDeclined" bioc:stroke="#c62828" bioc:fill="#ffebee" color:background-color="#ffebee" color:border-color="#c62828"><dc:Bounds x="1102" y="562" width="36" height="36" /><bpmndi:BPMNLabel color:color="#c62828"><dc:Bounds x="1070" y="602" width="100" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Timeout_di" bpmnElement="S_Timeout" bioc:stroke="#00838f" bioc:fill="#e0f7fa" color:background-color="#e0f7fa" color:border-color="#00838f"><dc:Bounds x="952" y="682" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="920" y="722" width="100" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_EndExpired_di" bpmnElement="S_EndExpired" bioc:stroke="#c62828" bioc:fill="#ffebee" color:background-color="#ffebee" color:border-color="#c62828"><dc:Bounds x="1102" y="682" width="36" height="36" /><bpmndi:BPMNLabel color:color="#c62828"><dc:Bounds x="1070" y="722" width="100" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Join_di" bpmnElement="S_Join" bioc:stroke="#37474f" bioc:fill="#ffffff" color:background-color="#ffffff" color:border-color="#37474f"><dc:Bounds x="1245" y="315" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_Activate_di" bpmnElement="S_Activate" bioc:stroke="#2e7d32" bioc:fill="#e8f5e9" color:background-color="#e8f5e9" color:border-color="#2e7d32"><dc:Bounds x="1370" y="300" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="S_End_di" bpmnElement="S_End" bioc:stroke="#2e7d32" bioc:fill="#e8f5e9" color:background-color="#e8f5e9" color:border-color="#2e7d32"><dc:Bounds x="1552" y="322" width="36" height="36" /><bpmndi:BPMNLabel color:color="#2e7d32"><dc:Bounds x="1520" y="362" width="100" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_Meter_di" bpmnElement="Note_Meter" bioc:stroke="#78909c" color:border-color="#78909c"><dc:Bounds x="180" y="780" width="620" height="90" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_S_Start_S_Tariff_di" bpmnElement="Flow_S_Start_S_Tariff"><di:waypoint x="238" y="340" /><di:waypoint x="320" y="340" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Tariff_S_Fork_di" bpmnElement="Flow_S_Tariff_S_Fork"><di:waypoint x="420" y="340" /><di:waypoint x="495" y="340" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Fork_S_Install_di" bpmnElement="Flow_S_Fork_S_Install"><di:waypoint x="520" y="315" /><di:waypoint x="520" y="220" /><di:waypoint x="620" y="220" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Install_S_Join_di" bpmnElement="Flow_S_Install_S_Join"><di:waypoint x="720" y="220" /><di:waypoint x="1270" y="220" /><di:waypoint x="1270" y="315" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Fork_S_Send_di" bpmnElement="Flow_S_Fork_S_Send"><di:waypoint x="520" y="365" /><di:waypoint x="520" y="460" /><di:waypoint x="620" y="460" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Send_S_Wait_di" bpmnElement="Flow_S_Send_S_Wait"><di:waypoint x="720" y="460" /><di:waypoint x="795" y="460" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Wait_S_Signed_di" bpmnElement="Flow_S_Wait_S_Signed"><di:waypoint x="845" y="460" /><di:waypoint x="952" y="460" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Signed_S_Join_di" bpmnElement="Flow_S_Signed_S_Join"><di:waypoint x="988" y="460" /><di:waypoint x="1270" y="460" /><di:waypoint x="1270" y="365" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Wait_S_Declined_di" bpmnElement="Flow_S_Wait_S_Declined"><di:waypoint x="820" y="485" /><di:waypoint x="820" y="580" /><di:waypoint x="952" y="580" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Declined_S_EndDeclined_di" bpmnElement="Flow_S_Declined_S_EndDeclined"><di:waypoint x="988" y="580" /><di:waypoint x="1102" y="580" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Wait_S_Timeout_di" bpmnElement="Flow_S_Wait_S_Timeout"><di:waypoint x="820" y="485" /><di:waypoint x="820" y="700" /><di:waypoint x="952" y="700" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Timeout_S_EndExpired_di" bpmnElement="Flow_S_Timeout_S_EndExpired"><di:waypoint x="988" y="700" /><di:waypoint x="1102" y="700" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Join_S_Activate_di" bpmnElement="Flow_S_Join_S_Activate"><di:waypoint x="1295" y="340" /><di:waypoint x="1370" y="340" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S_Activate_S_End_di" bpmnElement="Flow_S_Activate_S_End"><di:waypoint x="1470" y="340" /><di:waypoint x="1552" y="340" /></bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

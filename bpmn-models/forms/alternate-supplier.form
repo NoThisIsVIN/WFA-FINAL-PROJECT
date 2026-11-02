@@ -1,0 +1,48 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\nThe main supplier is out of stock. Order the transformer from a second supplier.",
+      "layout": {
+        "row": "Row_7dd0525",
+        "columns": null
+      },
+      "id": "Field_91f7d67"
+    },
+    {
+      "type": "textfield",
+      "key": "supplierName",
+      "label": "Supplier name",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_cb67fc0",
+        "columns": null
+      },
+      "id": "Field_a73fbfb"
+    },
+    {
+      "type": "textfield",
+      "key": "supplierOrderRef",
+      "label": "Supplier order reference",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_6391e20",
+        "columns": null
+      },
+      "id": "Field_b5167f0"
+    }
+  ],
+  "type": "default",
+  "id": "alternate-supplier",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

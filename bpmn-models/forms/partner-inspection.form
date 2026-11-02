@@ -1,0 +1,55 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\nNo Metro City Power inspector is free. Choose another way to inspect.\n\n**Device serial number:** {{device.serialNumber}}",
+      "layout": {
+        "row": "Row_784c278",
+        "columns": null
+      },
+      "id": "Field_338c70a"
+    },
+    {
+      "type": "radio",
+      "key": "inspectionMode",
+      "label": "Inspection method",
+      "values": [
+        {
+          "label": "Partner inspector visit",
+          "value": "PARTNER"
+        },
+        {
+          "label": "Video inspection",
+          "value": "VIDEO"
+        }
+      ],
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_a62fe17",
+        "columns": null
+      },
+      "id": "Field_63e3739"
+    },
+    {
+      "type": "textfield",
+      "key": "partnerName",
+      "label": "Partner company name (if partner visit)",
+      "layout": {
+        "row": "Row_d9e8f3b",
+        "columns": null
+      },
+      "id": "Field_e1c6a44"
+    }
+  ],
+  "type": "default",
+  "id": "partner-inspection",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

@@ -1,0 +1,50 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\nRecord the finished grid upgrade so the load can be checked again.",
+      "layout": {
+        "row": "Row_3ea70e6",
+        "columns": null
+      },
+      "id": "Field_8c8b709"
+    },
+    {
+      "type": "number",
+      "key": "newCapacityKw",
+      "label": "New grid capacity (kW)",
+      "validate": {
+        "required": true,
+        "min": 0
+      },
+      "layout": {
+        "row": "Row_97c9ed6",
+        "columns": null
+      },
+      "id": "Field_526eb48"
+    },
+    {
+      "type": "datetime",
+      "key": "installedOn",
+      "subtype": "date",
+      "dateLabel": "Installed on",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_f254f6f",
+        "columns": null
+      },
+      "id": "Field_e7c11f3"
+    }
+  ],
+  "type": "default",
+  "id": "upgrade-install",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

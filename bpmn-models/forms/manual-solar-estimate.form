@@ -1,0 +1,50 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\nNo yield data is available for this region. Please enter a manual estimate.\n\n**Panel size:** {{system.pvKw}} kW\n\n**Region:** {{site.region}}",
+      "layout": {
+        "row": "Row_b2c5a0d",
+        "columns": null
+      },
+      "id": "Field_25e2082"
+    },
+    {
+      "type": "number",
+      "key": "manualPeakKw",
+      "label": "Expected peak output (kW)",
+      "validate": {
+        "required": true,
+        "min": 0
+      },
+      "layout": {
+        "row": "Row_9f67e5d",
+        "columns": null
+      },
+      "id": "Field_e85cf67"
+    },
+    {
+      "type": "number",
+      "key": "manualAnnualKwh",
+      "label": "Expected yearly energy (kWh)",
+      "validate": {
+        "required": true,
+        "min": 0
+      },
+      "layout": {
+        "row": "Row_085cb34",
+        "columns": null
+      },
+      "id": "Field_e5fe8e5"
+    }
+  ],
+  "type": "default",
+  "id": "manual-solar-estimate",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="technical-assessment" name="Technical assessment" namespace="http://metrocitypower.example/dmn" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <decision id="FallbackYield" name="Fallback solar yield">
+    <description>Used when the weather API fails twice (F08, F09). Yield per installed kW by region. An unknown region matches nothing and gives null on purpose: the process then asks an engineer for a manual estimate.</description>
+    <decisionTable id="DecisionTable_FallbackYield" hitPolicy="UNIQUE">
+      <input id="Input_FallbackYield_1" label="Region">
+        <inputExpression id="InputExpression_FallbackYield_1" typeRef="string">
+          <text>site.region</text>
+        </inputExpression>
+      </input>
+      <output id="Output_FallbackYield_specificYield" label="Specific yield (kWh per kW per year)" name="specificYield" typeRef="number" />
+      <output id="Output_FallbackYield_peakFactor" label="Peak factor (peak kW per installed kW)" name="peakFactor" typeRef="number" />
+      <rule id="FallbackYield_North">
+        <description>North region: 1400 kWh per kW per year, peak 0.78 kW per kW.</description>
+        <inputEntry id="UnaryTests_FallbackYield_North_1"><text>&quot;NORTH&quot;</text></inputEntry>
+        <outputEntry id="LiteralExpression_FallbackYield_North_1"><text>1400</text></outputEntry>
+        <outputEntry id="LiteralExpression_FallbackYield_North_2"><text>0.78</text></outputEntry>
+      </rule>
+      <rule id="FallbackYield_South">
+        <description>South region: 1500 kWh per kW per year, peak 0.8 kW per kW.</description>
+        <inputEntry id="UnaryTests_FallbackYield_South_1"><text>&quot;SOUTH&quot;</text></inputEntry>
+        <outputEntry id="LiteralExpression_FallbackYield_South_1"><text>1500</text></outputEntry>
+        <outputEntry id="LiteralExpression_FallbackYield_South_2"><text>0.80</text></outputEntry>
+      </rule>
+      <rule id="FallbackYield_East">
+        <description>East region: 1450 kWh per kW per year, peak 0.79 kW per kW.</description>
+        <inputEntry id="UnaryTests_FallbackYield_East_1"><text>&quot;EAST&quot;</text></inputEntry>
+        <outputEntry id="LiteralExpression_FallbackYield_East_1"><text>1450</text></outputEntry>
+        <outputEntry id="LiteralExpression_FallbackYield_East_2"><text>0.79</text></outputEntry>
+      </rule>
+      <rule id="FallbackYield_West">
+        <description>West region: 1550 kWh per kW per year, peak 0.82 kW per kW.</description>
+        <inputEntry id="UnaryTests_FallbackYield_West_1"><text>&quot;WEST&quot;</text></inputEntry>
+        <outputEntry id="LiteralExpression_FallbackYield_West_1"><text>1550</text></outputEntry>
+        <outputEntry id="LiteralExpression_FallbackYield_West_2"><text>0.82</text></outputEntry>
+      </rule>
+      <rule id="FallbackYield_Central">
+        <description>Central region: 1500 kWh per kW per year, peak 0.8 kW per kW.</description>
+        <inputEntry id="UnaryTests_FallbackYield_Central_1"><text>&quot;CENTRAL&quot;</text></inputEntry>
+        <outputEntry id="LiteralExpression_FallbackYield_Central_1"><text>1500</text></outputEntry>
+        <outputEntry id="LiteralExpression_FallbackYield_Central_2"><text>0.80</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="GridLoadStatus" name="Grid load status">
+    <description>Substation load after adding this system, in percent of capacity. FIRST: the first matching row wins, so the order matters. OVERLOAD starts the transformer upgrade (F11).</description>
+    <decisionTable id="DecisionTable_GridLoadStatus" hitPolicy="FIRST">
+      <input id="Input_GridLoadStatus_1" label="Projected load %">
+        <inputExpression id="InputExpression_GridLoadStatus_1" typeRef="number">
+          <text>projectedLoadPct</text>
+        </inputExpression>
+      </input>
+      <output id="Output_GridLoadStatus_status" label="Status" name="status" typeRef="string" />
+      <rule id="GridLoadStatus_Overload">
+        <description>Above 100 % of capacity: transformer upgrade needed (F11).</description>
+        <inputEntry id="UnaryTests_GridLoadStatus_Overload_1"><text>&gt; 100</text></inputEntry>
+        <outputEntry id="LiteralExpression_GridLoadStatus_Overload_1"><text>&quot;OVERLOAD&quot;</text></outputEntry>
+      </rule>
+      <rule id="GridLoadStatus_Critical">
+        <description>85 % up to 100 %: connect, but final approval goes to manual review.</description>
+        <inputEntry id="UnaryTests_GridLoadStatus_Critical_1"><text>&gt;= 85</text></inputEntry>
+        <outputEntry id="LiteralExpression_GridLoadStatus_Critical_1"><text>&quot;CRITICAL&quot;</text></outputEntry>
+      </rule>
+      <rule id="GridLoadStatus_Warning">
+        <description>70 % up to 85 %: connect, flagged for grid planning.</description>
+        <inputEntry id="UnaryTests_GridLoadStatus_Warning_1"><text>&gt;= 70</text></inputEntry>
+        <outputEntry id="LiteralExpression_GridLoadStatus_Warning_1"><text>&quot;WARNING&quot;</text></outputEntry>
+      </rule>
+      <rule id="GridLoadStatus_Ok">
+        <description>Below 70 %: no grid concern.</description>
+        <inputEntry id="UnaryTests_GridLoadStatus_Ok_1"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_GridLoadStatus_Ok_1"><text>&quot;OK&quot;</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_TechnicalAssessment">
+      <dmndi:DMNShape id="DMNShape_FallbackYield" dmnElementRef="FallbackYield">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_GridLoadStatus" dmnElementRef="GridLoadStatus">
+        <dc:Bounds height="80" width="180" x="420" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

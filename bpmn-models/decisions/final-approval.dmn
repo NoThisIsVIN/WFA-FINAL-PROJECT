@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="final-approval" name="Final approval" namespace="http://metrocitypower.example/dmn" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <decision id="FinalApproval" name="Final approval">
+    <description>Metro City Power final approval (result variable approval; gateways use approval.decision). FIRST: rows are checked top to bottom and the first match wins, so a hard reject beats every review reason. batteryOk is null when there is no battery; only false matches the battery row.</description>
+    <decisionTable id="DecisionTable_FinalApproval" hitPolicy="FIRST">
+      <input id="Input_FinalApproval_FailedDevices" label="Failed devices">
+        <inputExpression id="InputExpression_FinalApproval_FailedDevices" typeRef="number">
+          <text>count(inspectionResults[outcome != "PASS"])</text>
+        </inputExpression>
+      </input>
+      <input id="Input_FinalApproval_GridLoadStatus" label="Grid load status">
+        <inputExpression id="InputExpression_FinalApproval_GridLoadStatus" typeRef="string">
+          <text>gridLoadStatus</text>
+        </inputExpression>
+      </input>
+      <input id="Input_FinalApproval_BatteryOk" label="Battery OK">
+        <inputExpression id="InputExpression_FinalApproval_BatteryOk" typeRef="boolean">
+          <text>batteryOk</text>
+        </inputExpression>
+      </input>
+      <input id="Input_FinalApproval_SizeClass" label="Size class">
+        <inputExpression id="InputExpression_FinalApproval_SizeClass" typeRef="string">
+          <text>classification.sizeClass</text>
+        </inputExpression>
+      </input>
+      <input id="Input_FinalApproval_ExportLimited" label="Export limited">
+        <inputExpression id="InputExpression_FinalApproval_ExportLimited" typeRef="boolean">
+          <text>exportLimited</text>
+        </inputExpression>
+      </input>
+      <output id="Output_FinalApproval_Decision" label="Decision" name="decision" typeRef="string" />
+      <output id="Output_FinalApproval_Reason" label="Reason" name="reason" typeRef="string" />
+      <rule id="FinalApproval_GridOverloaded">
+        <description>The grid is overloaded and no export limit was applied: the connection is rejected.</description>
+        <inputEntry id="UnaryTests_FinalApproval_GridOverloaded_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_GridOverloaded_2"><text>"OVERLOAD"</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_GridOverloaded_3"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_GridOverloaded_4"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_GridOverloaded_5"><text>false</text></inputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_GridOverloaded_1"><text>"REJECT"</text></outputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_GridOverloaded_2"><text>"grid still overloaded"</text></outputEntry>
+      </rule>
+      <rule id="FinalApproval_DevicesFailed">
+        <description>At least one device did not pass the safety inspection.</description>
+        <inputEntry id="UnaryTests_FinalApproval_DevicesFailed_1"><text>&gt; 0</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_DevicesFailed_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_DevicesFailed_3"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_DevicesFailed_4"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_DevicesFailed_5"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_DevicesFailed_1"><text>"MANUAL_REVIEW"</text></outputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_DevicesFailed_2"><text>"some devices failed"</text></outputEntry>
+      </rule>
+      <rule id="FinalApproval_BatteryAcceptedByEngineer">
+        <description>The battery failed the automatic check and was accepted by an engineer (null does not match).</description>
+        <inputEntry id="UnaryTests_FinalApproval_BatteryAcceptedByEngineer_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_BatteryAcceptedByEngineer_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_BatteryAcceptedByEngineer_3"><text>false</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_BatteryAcceptedByEngineer_4"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_BatteryAcceptedByEngineer_5"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_BatteryAcceptedByEngineer_1"><text>"MANUAL_REVIEW"</text></outputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_BatteryAcceptedByEngineer_2"><text>"battery accepted by engineer"</text></outputEntry>
+      </rule>
+      <rule id="FinalApproval_GridCritical">
+        <description>The grid is close to its limit.</description>
+        <inputEntry id="UnaryTests_FinalApproval_GridCritical_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_GridCritical_2"><text>"CRITICAL"</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_GridCritical_3"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_GridCritical_4"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_GridCritical_5"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_GridCritical_1"><text>"MANUAL_REVIEW"</text></outputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_GridCritical_2"><text>"grid near its limit"</text></outputEntry>
+      </rule>
+      <rule id="FinalApproval_LargeSystem">
+        <description>Large systems (above 100 kW) always get a human sign-off.</description>
+        <inputEntry id="UnaryTests_FinalApproval_LargeSystem_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_LargeSystem_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_LargeSystem_3"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_LargeSystem_4"><text>"LARGE"</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_LargeSystem_5"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_LargeSystem_1"><text>"MANUAL_REVIEW"</text></outputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_LargeSystem_2"><text>"large system"</text></outputEntry>
+      </rule>
+      <rule id="FinalApproval_ExportLimited">
+        <description>An export limit was applied to the system.</description>
+        <inputEntry id="UnaryTests_FinalApproval_ExportLimited_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_ExportLimited_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_ExportLimited_3"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_ExportLimited_4"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_ExportLimited_5"><text>true</text></inputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_ExportLimited_1"><text>"MANUAL_REVIEW"</text></outputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_ExportLimited_2"><text>"export limit applied"</text></outputEntry>
+      </rule>
+      <rule id="FinalApproval_AllChecksPassed">
+        <description>Micro, small or medium system on a grid that is OK or in warning: approved automatically.</description>
+        <inputEntry id="UnaryTests_FinalApproval_AllChecksPassed_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_AllChecksPassed_2"><text>"OK","WARNING"</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_AllChecksPassed_3"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_AllChecksPassed_4"><text>"MICRO","SMALL","MEDIUM"</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_AllChecksPassed_5"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_AllChecksPassed_1"><text>"AUTO_APPROVE"</text></outputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_AllChecksPassed_2"><text>"all checks passed"</text></outputEntry>
+      </rule>
+      <rule id="FinalApproval_NoRuleMatched">
+        <description>Anything else (for example an unknown size class or missing grid status) goes to a person.</description>
+        <inputEntry id="UnaryTests_FinalApproval_NoRuleMatched_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_NoRuleMatched_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_NoRuleMatched_3"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_NoRuleMatched_4"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_FinalApproval_NoRuleMatched_5"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_NoRuleMatched_1"><text>"MANUAL_REVIEW"</text></outputEntry>
+        <outputEntry id="LiteralExpression_FinalApproval_NoRuleMatched_2"><text>"no rule matched"</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_FinalApproval">
+      <dmndi:DMNShape id="DMNShape_FinalApproval" dmnElementRef="FinalApproval">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

@@ -1,0 +1,46 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\n**Why this needs review:** {{approval.reason}}",
+      "layout": {
+        "row": "Row_f865ecf",
+        "columns": null
+      },
+      "id": "Field_2de1e64"
+    },
+    {
+      "type": "textfield",
+      "key": "firstApproverId",
+      "label": "Your staff ID",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_29b2df7",
+        "columns": null
+      },
+      "id": "Field_c64cc58"
+    },
+    {
+      "type": "checkbox",
+      "key": "firstApproved",
+      "label": "I approve this connection",
+      "defaultValue": false,
+      "layout": {
+        "row": "Row_0b80ed5",
+        "columns": null
+      },
+      "id": "Field_a008629"
+    }
+  ],
+  "type": "default",
+  "id": "first-review",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

@@ -1,0 +1,43 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\nThe battery did not pass the automatic check.\n\n**Battery power:** {{system.batteryKw}} kW\n\n**Battery capacity:** {{system.batteryKwh}} kWh\n\n**Inverter size:** {{system.inverterKw}} kW",
+      "layout": {
+        "row": "Row_e80f56b",
+        "columns": null
+      },
+      "id": "Field_dee1271"
+    },
+    {
+      "type": "checkbox",
+      "key": "batteryAccepted",
+      "label": "Accept the battery set-up",
+      "defaultValue": false,
+      "layout": {
+        "row": "Row_4339f38",
+        "columns": null
+      },
+      "id": "Field_3af7b8b"
+    },
+    {
+      "type": "textarea",
+      "key": "batteryNote",
+      "label": "Engineer note",
+      "layout": {
+        "row": "Row_53263eb",
+        "columns": null
+      },
+      "id": "Field_f0be11c"
+    }
+  ],
+  "type": "default",
+  "id": "battery-review",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

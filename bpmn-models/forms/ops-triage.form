@@ -1,0 +1,35 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\nA technical error stopped this case. Check the incident and record what was done.",
+      "layout": {
+        "row": "Row_b7ddd8f",
+        "columns": null
+      },
+      "id": "Field_9203b91"
+    },
+    {
+      "type": "textarea",
+      "key": "opsNote",
+      "label": "What happened and what was done",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_0ce85a0",
+        "columns": null
+      },
+      "id": "Field_56cb9fb"
+    }
+  ],
+  "type": "default",
+  "id": "ops-triage",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

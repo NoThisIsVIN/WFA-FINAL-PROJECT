@@ -1,0 +1,85 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\n**Device:** {{device.serialNumber}} ({{device.type}})\n\n**Checks to do:**\n\n{{#loop checklist}}- {{this}}\n{{/loop}}",
+      "layout": {
+        "row": "Row_464195b",
+        "columns": null
+      },
+      "id": "Field_9f73dd0"
+    },
+    {
+      "type": "radio",
+      "key": "inspectionOutcome",
+      "label": "Inspection result",
+      "values": [
+        {
+          "label": "Pass",
+          "value": "PASS"
+        },
+        {
+          "label": "Minor issues",
+          "value": "MINOR"
+        },
+        {
+          "label": "Critical issues",
+          "value": "CRITICAL"
+        }
+      ],
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_6d31df4",
+        "columns": null
+      },
+      "id": "Field_f7af6fe"
+    },
+    {
+      "type": "number",
+      "key": "insulationMOhm",
+      "label": "Insulation resistance (MΩ)",
+      "validate": {
+        "min": 0
+      },
+      "layout": {
+        "row": "Row_a7870e3",
+        "columns": null
+      },
+      "id": "Field_06ce384"
+    },
+    {
+      "type": "number",
+      "key": "earthOhm",
+      "label": "Earth resistance (Ω)",
+      "validate": {
+        "min": 0
+      },
+      "layout": {
+        "row": "Row_86e9368",
+        "columns": null
+      },
+      "id": "Field_1092423"
+    },
+    {
+      "type": "textarea",
+      "key": "inspectionNotes",
+      "label": "Inspection notes",
+      "layout": {
+        "row": "Row_cb8d80b",
+        "columns": null
+      },
+      "id": "Field_c8ec61f"
+    }
+  ],
+  "type": "default",
+  "id": "safety-inspection",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

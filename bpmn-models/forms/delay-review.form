@@ -1,0 +1,46 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\nThis case has passed its target time. Please review the delay.",
+      "layout": {
+        "row": "Row_a92e063",
+        "columns": null
+      },
+      "id": "Field_ba758b8"
+    },
+    {
+      "type": "textarea",
+      "key": "delayNote",
+      "label": "Reason for the delay and next steps",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_d0c4590",
+        "columns": null
+      },
+      "id": "Field_3b60c90"
+    },
+    {
+      "type": "datetime",
+      "key": "newTargetDate",
+      "subtype": "date",
+      "dateLabel": "New target date",
+      "layout": {
+        "row": "Row_db8faab",
+        "columns": null
+      },
+      "id": "Field_16b4bc8"
+    }
+  ],
+  "type": "default",
+  "id": "delay-review",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

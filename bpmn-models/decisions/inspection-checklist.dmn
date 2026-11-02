@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="inspection-checklist" name="Inspection checklist" namespace="http://metrocitypower.example/dmn" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <decision id="InspectionChecklist" name="Inspection checklist">
+    <description>Metro City Power site inspection checklist for one device. Evaluated once per device inside the inspection multi-instance (result variable checklist, a list of strings). RULE ORDER: items come out in the order the inspector works through them.</description>
+    <decisionTable id="DecisionTable_InspectionChecklist" hitPolicy="RULE ORDER">
+      <input id="Input_InspectionChecklist_DeviceType" label="Device type">
+        <inputExpression id="InputExpression_InspectionChecklist_DeviceType" typeRef="string">
+          <text>device.type</text>
+        </inputExpression>
+      </input>
+      <input id="Input_InspectionChecklist_ApplicantType" label="Applicant type">
+        <inputExpression id="InputExpression_InspectionChecklist_ApplicantType" typeRef="string">
+          <text>applicant.type</text>
+        </inputExpression>
+      </input>
+      <output id="Output_InspectionChecklist_CheckItem" label="Check item" name="checkItem" typeRef="string" />
+      <rule id="InspectionChecklist_VisualCheck">
+        <description>Every device starts with a visual check of mounting, cables and labels.</description>
+        <inputEntry id="UnaryTests_InspectionChecklist_VisualCheck_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_InspectionChecklist_VisualCheck_2"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_InspectionChecklist_VisualCheck_1"><text>"VISUAL_CHECK"</text></outputEntry>
+      </rule>
+      <rule id="InspectionChecklist_AntiIslandingTest">
+        <description>Inverters must stop feeding the grid when the grid goes down.</description>
+        <inputEntry id="UnaryTests_InspectionChecklist_AntiIslandingTest_1"><text>"INVERTER"</text></inputEntry>
+        <inputEntry id="UnaryTests_InspectionChecklist_AntiIslandingTest_2"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_InspectionChecklist_AntiIslandingTest_1"><text>"ANTI_ISLANDING_TEST"</text></outputEntry>
+      </rule>
+      <rule id="InspectionChecklist_InsulationResistance">
+        <description>Inverters get an insulation resistance measurement on the DC side.</description>
+        <inputEntry id="UnaryTests_InspectionChecklist_InsulationResistance_1"><text>"INVERTER"</text></inputEntry>
+        <inputEntry id="UnaryTests_InspectionChecklist_InsulationResistance_2"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_InspectionChecklist_InsulationResistance_1"><text>"INSULATION_RESISTANCE"</text></outputEntry>
+      </rule>
+      <rule id="InspectionChecklist_ThermalCheck">
+        <description>Batteries get a thermal check of cells and enclosure.</description>
+        <inputEntry id="UnaryTests_InspectionChecklist_ThermalCheck_1"><text>"BATTERY"</text></inputEntry>
+        <inputEntry id="UnaryTests_InspectionChecklist_ThermalCheck_2"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_InspectionChecklist_ThermalCheck_1"><text>"THERMAL_CHECK"</text></outputEntry>
+      </rule>
+      <rule id="InspectionChecklist_VentilationCheck">
+        <description>Battery rooms and enclosures must be ventilated.</description>
+        <inputEntry id="UnaryTests_InspectionChecklist_VentilationCheck_1"><text>"BATTERY"</text></inputEntry>
+        <inputEntry id="UnaryTests_InspectionChecklist_VentilationCheck_2"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_InspectionChecklist_VentilationCheck_1"><text>"VENTILATION_CHECK"</text></outputEntry>
+      </rule>
+      <rule id="InspectionChecklist_ProtectionRelayTest">
+        <description>Factory sites need a protection relay test for every device.</description>
+        <inputEntry id="UnaryTests_InspectionChecklist_ProtectionRelayTest_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_InspectionChecklist_ProtectionRelayTest_2"><text>"FACTORY"</text></inputEntry>
+        <outputEntry id="LiteralExpression_InspectionChecklist_ProtectionRelayTest_1"><text>"PROTECTION_RELAY_TEST"</text></outputEntry>
+      </rule>
+      <rule id="InspectionChecklist_EarthingTest">
+        <description>Every device ends with an earthing test.</description>
+        <inputEntry id="UnaryTests_InspectionChecklist_EarthingTest_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_InspectionChecklist_EarthingTest_2"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_InspectionChecklist_EarthingTest_1"><text>"EARTHING_TEST"</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_InspectionChecklist">
+      <dmndi:DMNShape id="DMNShape_InspectionChecklist" dmnElementRef="InspectionChecklist">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

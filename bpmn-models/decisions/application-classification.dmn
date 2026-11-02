@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="application-classification" name="Application classification" namespace="http://metrocitypower.example/dmn" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <decision id="ApplicationClassification" name="Application classification">
+    <description>Combines the four tables into one result (BPMN result variable classification). Empty document list and fee 0 when no rule matched.</description>
+    <variable id="InformationItem_ApplicationClassification" name="ApplicationClassification" />
+    <informationRequirement id="InformationRequirement_ApplicationClassification_SizeClass">
+      <requiredDecision href="#SizeClass" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_ApplicationClassification_RequiredDocuments">
+      <requiredDecision href="#RequiredDocuments" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_ApplicationClassification_ConnectionFee">
+      <requiredDecision href="#ConnectionFee" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_ApplicationClassification_CasePriority">
+      <requiredDecision href="#CasePriority" />
+    </informationRequirement>
+    <literalExpression id="LiteralExpression_ApplicationClassification">
+      <text>{
+  sizeClass: SizeClass,
+  requiredDocuments: if RequiredDocuments = null then [] else RequiredDocuments,
+  connectionFeeRs: if ConnectionFee = null then 0 else ConnectionFee,
+  priority: CasePriority
+}</text>
+    </literalExpression>
+  </decision>
+  <decision id="SizeClass" name="Size class">
+    <description>Size class from the inverter size in kW. Missing, zero or negative values give UNKNOWN so the process can ask a person (F06).</description>
+    <decisionTable id="DecisionTable_SizeClass" hitPolicy="UNIQUE">
+      <input id="Input_SizeClass_1" label="Inverter kW">
+        <inputExpression id="InputExpression_SizeClass_1" typeRef="number">
+          <text>system.inverterKw</text>
+        </inputExpression>
+      </input>
+      <output id="Output_SizeClass_sizeClass" label="Size class" name="sizeClass" typeRef="string" />
+      <rule id="SizeClass_Micro">
+        <description>Up to 1 kW (balcony systems): fast path, register only (F07).</description>
+        <inputEntry id="UnaryTests_SizeClass_Micro_1"><text>]0..1]</text></inputEntry>
+        <outputEntry id="LiteralExpression_SizeClass_Micro_1"><text>&quot;MICRO&quot;</text></outputEntry>
+      </rule>
+      <rule id="SizeClass_Small">
+        <description>Above 1 kW up to 10 kW: typical home roof.</description>
+        <inputEntry id="UnaryTests_SizeClass_Small_1"><text>]1..10]</text></inputEntry>
+        <outputEntry id="LiteralExpression_SizeClass_Small_1"><text>&quot;SMALL&quot;</text></outputEntry>
+      </rule>
+      <rule id="SizeClass_Medium">
+        <description>Above 10 kW up to 100 kW.</description>
+        <inputEntry id="UnaryTests_SizeClass_Medium_1"><text>]10..100]</text></inputEntry>
+        <outputEntry id="LiteralExpression_SizeClass_Medium_1"><text>&quot;MEDIUM&quot;</text></outputEntry>
+      </rule>
+      <rule id="SizeClass_Large">
+        <description>Above 100 kW: large factory roof.</description>
+        <inputEntry id="UnaryTests_SizeClass_Large_1"><text>&gt; 100</text></inputEntry>
+        <outputEntry id="LiteralExpression_SizeClass_Large_1"><text>&quot;LARGE&quot;</text></outputEntry>
+      </rule>
+      <rule id="SizeClass_Unknown">
+        <description>Missing, zero or negative inverter size: cannot classify (F06).</description>
+        <inputEntry id="UnaryTests_SizeClass_Unknown_1"><text>null, &lt;= 0</text></inputEntry>
+        <outputEntry id="LiteralExpression_SizeClass_Unknown_1"><text>&quot;UNKNOWN&quot;</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="RequiredDocuments" name="Required documents">
+    <description>List of documents the applicant must upload. COLLECT returns every matching document in rule order (null when nothing matches).</description>
+    <informationRequirement id="InformationRequirement_RequiredDocuments_SizeClass">
+      <requiredDecision href="#SizeClass" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_RequiredDocuments" hitPolicy="COLLECT">
+      <input id="Input_RequiredDocuments_1" label="Size class">
+        <inputExpression id="InputExpression_RequiredDocuments_1" typeRef="string">
+          <text>SizeClass</text>
+        </inputExpression>
+      </input>
+      <input id="Input_RequiredDocuments_2" label="Applicant type">
+        <inputExpression id="InputExpression_RequiredDocuments_2" typeRef="string">
+          <text>applicant.type</text>
+        </inputExpression>
+      </input>
+      <input id="Input_RequiredDocuments_3" label="Has battery">
+        <inputExpression id="InputExpression_RequiredDocuments_3" typeRef="boolean">
+          <text>hasBattery</text>
+        </inputExpression>
+      </input>
+      <output id="Output_RequiredDocuments_document" label="Document" name="document" typeRef="string" />
+      <rule id="RequiredDocuments_SelfDeclaration">
+        <description>MICRO systems only need a self declaration.</description>
+        <inputEntry id="UnaryTests_RequiredDocuments_SelfDeclaration_1"><text>&quot;MICRO&quot;</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_SelfDeclaration_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_SelfDeclaration_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_RequiredDocuments_SelfDeclaration_1"><text>&quot;SELF_DECLARATION&quot;</text></outputEntry>
+      </rule>
+      <rule id="RequiredDocuments_SitePhotos">
+        <description>Every system above MICRO needs photos of the site.</description>
+        <inputEntry id="UnaryTests_RequiredDocuments_SitePhotos_1"><text>not(&quot;MICRO&quot;, &quot;UNKNOWN&quot;)</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_SitePhotos_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_SitePhotos_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_RequiredDocuments_SitePhotos_1"><text>&quot;SITE_PHOTOS&quot;</text></outputEntry>
+      </rule>
+      <rule id="RequiredDocuments_InverterCertificate">
+        <description>Every system above MICRO needs the inverter certificate.</description>
+        <inputEntry id="UnaryTests_RequiredDocuments_InverterCertificate_1"><text>not(&quot;MICRO&quot;, &quot;UNKNOWN&quot;)</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_InverterCertificate_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_InverterCertificate_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_RequiredDocuments_InverterCertificate_1"><text>&quot;INVERTER_CERTIFICATE&quot;</text></outputEntry>
+      </rule>
+      <rule id="RequiredDocuments_SingleLineDiagram">
+        <description>MEDIUM and LARGE systems need a single line diagram.</description>
+        <inputEntry id="UnaryTests_RequiredDocuments_SingleLineDiagram_1"><text>&quot;MEDIUM&quot;, &quot;LARGE&quot;</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_SingleLineDiagram_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_SingleLineDiagram_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_RequiredDocuments_SingleLineDiagram_1"><text>&quot;SINGLE_LINE_DIAGRAM&quot;</text></outputEntry>
+      </rule>
+      <rule id="RequiredDocuments_StructuralReportLarge">
+        <description>LARGE systems need a structural report for the roof.</description>
+        <inputEntry id="UnaryTests_RequiredDocuments_StructuralReportLarge_1"><text>&quot;LARGE&quot;</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_StructuralReportLarge_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_StructuralReportLarge_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_RequiredDocuments_StructuralReportLarge_1"><text>&quot;STRUCTURAL_REPORT&quot;</text></outputEntry>
+      </rule>
+      <rule id="RequiredDocuments_StructuralReportFactory">
+        <description>Factories need a structural report too (not listed twice for LARGE factories).</description>
+        <inputEntry id="UnaryTests_RequiredDocuments_StructuralReportFactory_1"><text>not(&quot;LARGE&quot;)</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_StructuralReportFactory_2"><text>&quot;FACTORY&quot;</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_StructuralReportFactory_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_RequiredDocuments_StructuralReportFactory_1"><text>&quot;STRUCTURAL_REPORT&quot;</text></outputEntry>
+      </rule>
+      <rule id="RequiredDocuments_BatteryDatasheet">
+        <description>A battery needs its datasheet.</description>
+        <inputEntry id="UnaryTests_RequiredDocuments_BatteryDatasheet_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_BatteryDatasheet_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_BatteryDatasheet_3"><text>true</text></inputEntry>
+        <outputEntry id="LiteralExpression_RequiredDocuments_BatteryDatasheet_1"><text>&quot;BATTERY_DATASHEET&quot;</text></outputEntry>
+      </rule>
+      <rule id="RequiredDocuments_FactoryLicence">
+        <description>Factories need their factory licence.</description>
+        <inputEntry id="UnaryTests_RequiredDocuments_FactoryLicence_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_FactoryLicence_2"><text>&quot;FACTORY&quot;</text></inputEntry>
+        <inputEntry id="UnaryTests_RequiredDocuments_FactoryLicence_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_RequiredDocuments_FactoryLicence_1"><text>&quot;FACTORY_LICENCE&quot;</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="ConnectionFee" name="Connection fee (Rs)">
+    <description>Connection fee in Rs: base fee by size plus extras. COLLECT SUM adds all matching rows.</description>
+    <informationRequirement id="InformationRequirement_ConnectionFee_SizeClass">
+      <requiredDecision href="#SizeClass" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_ConnectionFee" hitPolicy="COLLECT" aggregation="SUM">
+      <input id="Input_ConnectionFee_1" label="Size class">
+        <inputExpression id="InputExpression_ConnectionFee_1" typeRef="string">
+          <text>SizeClass</text>
+        </inputExpression>
+      </input>
+      <input id="Input_ConnectionFee_2" label="Has battery">
+        <inputExpression id="InputExpression_ConnectionFee_2" typeRef="boolean">
+          <text>hasBattery</text>
+        </inputExpression>
+      </input>
+      <input id="Input_ConnectionFee_3" label="Applicant type">
+        <inputExpression id="InputExpression_ConnectionFee_3" typeRef="string">
+          <text>applicant.type</text>
+        </inputExpression>
+      </input>
+      <output id="Output_ConnectionFee_feeRs" label="Fee (Rs)" name="feeRs" typeRef="number" />
+      <rule id="ConnectionFee_Micro">
+        <description>MICRO: no base fee.</description>
+        <inputEntry id="UnaryTests_ConnectionFee_Micro_1"><text>&quot;MICRO&quot;</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Micro_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Micro_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_ConnectionFee_Micro_1"><text>0</text></outputEntry>
+      </rule>
+      <rule id="ConnectionFee_Small">
+        <description>SMALL base fee Rs 1500.</description>
+        <inputEntry id="UnaryTests_ConnectionFee_Small_1"><text>&quot;SMALL&quot;</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Small_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Small_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_ConnectionFee_Small_1"><text>1500</text></outputEntry>
+      </rule>
+      <rule id="ConnectionFee_Medium">
+        <description>MEDIUM base fee Rs 7500.</description>
+        <inputEntry id="UnaryTests_ConnectionFee_Medium_1"><text>&quot;MEDIUM&quot;</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Medium_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Medium_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_ConnectionFee_Medium_1"><text>7500</text></outputEntry>
+      </rule>
+      <rule id="ConnectionFee_Large">
+        <description>LARGE base fee Rs 25000.</description>
+        <inputEntry id="UnaryTests_ConnectionFee_Large_1"><text>&quot;LARGE&quot;</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Large_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Large_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_ConnectionFee_Large_1"><text>25000</text></outputEntry>
+      </rule>
+      <rule id="ConnectionFee_Battery">
+        <description>Battery review adds Rs 1000.</description>
+        <inputEntry id="UnaryTests_ConnectionFee_Battery_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Battery_2"><text>true</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Battery_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_ConnectionFee_Battery_1"><text>1000</text></outputEntry>
+      </rule>
+      <rule id="ConnectionFee_Factory">
+        <description>Factory connection adds Rs 5000.</description>
+        <inputEntry id="UnaryTests_ConnectionFee_Factory_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Factory_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_ConnectionFee_Factory_3"><text>&quot;FACTORY&quot;</text></inputEntry>
+        <outputEntry id="LiteralExpression_ConnectionFee_Factory_1"><text>5000</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="CasePriority" name="Case priority">
+    <description>Queue priority. PRIORITY returns the highest output value of all matching rows, in the order HIGH, NORMAL, LOW.</description>
+    <informationRequirement id="InformationRequirement_CasePriority_SizeClass">
+      <requiredDecision href="#SizeClass" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_CasePriority" hitPolicy="PRIORITY">
+      <input id="Input_CasePriority_1" label="Size class">
+        <inputExpression id="InputExpression_CasePriority_1" typeRef="string">
+          <text>SizeClass</text>
+        </inputExpression>
+      </input>
+      <input id="Input_CasePriority_2" label="Applicant type">
+        <inputExpression id="InputExpression_CasePriority_2" typeRef="string">
+          <text>applicant.type</text>
+        </inputExpression>
+      </input>
+      <output id="Output_CasePriority_priority" label="Priority" name="priority" typeRef="string">
+        <outputValues id="UnaryTests_CasePriority_priority_values"><text>&quot;HIGH&quot;,&quot;NORMAL&quot;,&quot;LOW&quot;</text></outputValues>
+      </output>
+      <rule id="CasePriority_LargeHigh">
+        <description>LARGE systems are handled first.</description>
+        <inputEntry id="UnaryTests_CasePriority_LargeHigh_1"><text>&quot;LARGE&quot;</text></inputEntry>
+        <inputEntry id="UnaryTests_CasePriority_LargeHigh_2"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_CasePriority_LargeHigh_1"><text>&quot;HIGH&quot;</text></outputEntry>
+      </rule>
+      <rule id="CasePriority_FactoryHigh">
+        <description>Factories are handled first.</description>
+        <inputEntry id="UnaryTests_CasePriority_FactoryHigh_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_CasePriority_FactoryHigh_2"><text>&quot;FACTORY&quot;</text></inputEntry>
+        <outputEntry id="LiteralExpression_CasePriority_FactoryHigh_1"><text>&quot;HIGH&quot;</text></outputEntry>
+      </rule>
+      <rule id="CasePriority_MicroLow">
+        <description>MICRO systems are low priority.</description>
+        <inputEntry id="UnaryTests_CasePriority_MicroLow_1"><text>&quot;MICRO&quot;</text></inputEntry>
+        <inputEntry id="UnaryTests_CasePriority_MicroLow_2"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_CasePriority_MicroLow_1"><text>&quot;LOW&quot;</text></outputEntry>
+      </rule>
+      <rule id="CasePriority_Normal">
+        <description>Everything else is normal priority.</description>
+        <inputEntry id="UnaryTests_CasePriority_Normal_1"><text>not(&quot;MICRO&quot;)</text></inputEntry>
+        <inputEntry id="UnaryTests_CasePriority_Normal_2"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_CasePriority_Normal_1"><text>&quot;NORMAL&quot;</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_ApplicationClassification">
+      <dmndi:DMNShape id="DMNShape_ApplicationClassification" dmnElementRef="ApplicationClassification">
+        <dc:Bounds height="80" width="180" x="400" y="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_RequiredDocuments" dmnElementRef="RequiredDocuments">
+        <dc:Bounds height="80" width="180" x="100" y="260" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_ConnectionFee" dmnElementRef="ConnectionFee">
+        <dc:Bounds height="80" width="180" x="400" y="260" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_CasePriority" dmnElementRef="CasePriority">
+        <dc:Bounds height="80" width="180" x="700" y="260" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_SizeClass" dmnElementRef="SizeClass">
+        <dc:Bounds height="80" width="180" x="400" y="440" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_RequiredDocuments_SizeClass" dmnElementRef="InformationRequirement_RequiredDocuments_SizeClass">
+        <di:waypoint x="430" y="440" />
+        <di:waypoint x="190" y="400" />
+        <di:waypoint x="190" y="340" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_ConnectionFee_SizeClass" dmnElementRef="InformationRequirement_ConnectionFee_SizeClass">
+        <di:waypoint x="490" y="440" />
+        <di:waypoint x="490" y="340" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_CasePriority_SizeClass" dmnElementRef="InformationRequirement_CasePriority_SizeClass">
+        <di:waypoint x="550" y="440" />
+        <di:waypoint x="790" y="400" />
+        <di:waypoint x="790" y="340" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_ApplicationClassification_RequiredDocuments" dmnElementRef="InformationRequirement_ApplicationClassification_RequiredDocuments">
+        <di:waypoint x="190" y="260" />
+        <di:waypoint x="430" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_ApplicationClassification_ConnectionFee" dmnElementRef="InformationRequirement_ApplicationClassification_ConnectionFee">
+        <di:waypoint x="490" y="260" />
+        <di:waypoint x="490" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_ApplicationClassification_CasePriority" dmnElementRef="InformationRequirement_ApplicationClassification_CasePriority">
+        <di:waypoint x="790" y="260" />
+        <di:waypoint x="550" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_ApplicationClassification_SizeClass" dmnElementRef="InformationRequirement_ApplicationClassification_SizeClass">
+        <di:waypoint x="580" y="480" />
+        <di:waypoint x="960" y="480" />
+        <di:waypoint x="960" y="120" />
+        <di:waypoint x="580" y="120" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

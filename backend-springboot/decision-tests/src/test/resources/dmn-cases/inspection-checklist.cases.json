@@ -1,0 +1,170 @@
+{
+  "dmnFile": "inspection-checklist.dmn",
+  "cases": [
+    {
+      "name": "INVERTER at a HOME -> visual, anti-islanding, insulation, earthing",
+      "decisionId": "InspectionChecklist",
+      "variables": {
+        "device": {
+          "serialNumber": "DEV-001",
+          "type": "INVERTER",
+          "model": "Test model",
+          "certificateId": "CERT-001"
+        },
+        "applicant": {
+          "name": "Asha Rao",
+          "type": "HOME"
+        }
+      },
+      "expected": [
+        "VISUAL_CHECK",
+        "ANTI_ISLANDING_TEST",
+        "INSULATION_RESISTANCE",
+        "EARTHING_TEST"
+      ],
+      "expectedMatchedRules": {
+        "InspectionChecklist": [
+          "InspectionChecklist_VisualCheck",
+          "InspectionChecklist_AntiIslandingTest",
+          "InspectionChecklist_InsulationResistance",
+          "InspectionChecklist_EarthingTest"
+        ]
+      }
+    },
+    {
+      "name": "BATTERY at a FACTORY -> visual, thermal, ventilation, protection relay, earthing",
+      "decisionId": "InspectionChecklist",
+      "variables": {
+        "device": {
+          "serialNumber": "DEV-001",
+          "type": "BATTERY",
+          "model": "Test model",
+          "certificateId": "CERT-001"
+        },
+        "applicant": {
+          "name": "Asha Rao",
+          "type": "FACTORY"
+        }
+      },
+      "expected": [
+        "VISUAL_CHECK",
+        "THERMAL_CHECK",
+        "VENTILATION_CHECK",
+        "PROTECTION_RELAY_TEST",
+        "EARTHING_TEST"
+      ],
+      "expectedMatchedRules": {
+        "InspectionChecklist": [
+          "InspectionChecklist_VisualCheck",
+          "InspectionChecklist_ThermalCheck",
+          "InspectionChecklist_VentilationCheck",
+          "InspectionChecklist_ProtectionRelayTest",
+          "InspectionChecklist_EarthingTest"
+        ]
+      }
+    },
+    {
+      "name": "INVERTER at a FACTORY -> inverter tests plus protection relay",
+      "decisionId": "InspectionChecklist",
+      "variables": {
+        "device": {
+          "serialNumber": "DEV-001",
+          "type": "INVERTER",
+          "model": "Test model",
+          "certificateId": "CERT-001"
+        },
+        "applicant": {
+          "name": "Asha Rao",
+          "type": "FACTORY"
+        }
+      },
+      "expected": [
+        "VISUAL_CHECK",
+        "ANTI_ISLANDING_TEST",
+        "INSULATION_RESISTANCE",
+        "PROTECTION_RELAY_TEST",
+        "EARTHING_TEST"
+      ],
+      "expectedMatchedRules": {
+        "InspectionChecklist": [
+          "InspectionChecklist_VisualCheck",
+          "InspectionChecklist_AntiIslandingTest",
+          "InspectionChecklist_InsulationResistance",
+          "InspectionChecklist_ProtectionRelayTest",
+          "InspectionChecklist_EarthingTest"
+        ]
+      }
+    },
+    {
+      "name": "BATTERY at a HOME -> visual, thermal, ventilation, earthing",
+      "decisionId": "InspectionChecklist",
+      "variables": {
+        "device": {
+          "serialNumber": "DEV-001",
+          "type": "BATTERY",
+          "model": "Test model",
+          "certificateId": "CERT-001"
+        },
+        "applicant": {
+          "name": "Asha Rao",
+          "type": "HOME"
+        }
+      },
+      "expected": [
+        "VISUAL_CHECK",
+        "THERMAL_CHECK",
+        "VENTILATION_CHECK",
+        "EARTHING_TEST"
+      ],
+      "expectedMatchedRules": {
+        "InspectionChecklist": [
+          "InspectionChecklist_VisualCheck",
+          "InspectionChecklist_ThermalCheck",
+          "InspectionChecklist_VentilationCheck",
+          "InspectionChecklist_EarthingTest"
+        ]
+      }
+    },
+    {
+      "name": "Unknown device type at a HOME -> only visual and earthing",
+      "decisionId": "InspectionChecklist",
+      "variables": {
+        "device": {
+          "serialNumber": "DEV-001",
+          "type": "METER",
+          "model": "Test model",
+          "certificateId": "CERT-001"
+        },
+        "applicant": {
+          "name": "Asha Rao",
+          "type": "HOME"
+        }
+      },
+      "expected": [
+        "VISUAL_CHECK",
+        "EARTHING_TEST"
+      ],
+      "expectedMatchedRules": {
+        "InspectionChecklist": [
+          "InspectionChecklist_VisualCheck",
+          "InspectionChecklist_EarthingTest"
+        ]
+      }
+    },
+    {
+      "name": "No device or applicant data -> still visual and earthing",
+      "decisionId": "InspectionChecklist",
+      "variables": {},
+      "expected": [
+        "VISUAL_CHECK",
+        "EARTHING_TEST"
+      ],
+      "expectedMatchedRules": {
+        "InspectionChecklist": [
+          "InspectionChecklist_VisualCheck",
+          "InspectionChecklist_EarthingTest"
+        ]
+      }
+    }
+  ]
+}

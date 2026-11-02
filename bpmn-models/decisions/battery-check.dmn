@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="battery-check" name="Battery check" namespace="http://metrocitypower.example/dmn" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <decision id="BatteryCheck" name="Battery check">
+    <description>Metro City Power battery rules. Called by the battery check task (result variable batteryOk). ANY: every failing check gives false, so several failing checks at once still agree. Missing battery figures match no rule and give null, which the process sends to an engineer.</description>
+    <decisionTable id="DecisionTable_BatteryCheck" hitPolicy="ANY">
+      <input id="Input_BatteryCheck_PowerWithinInverter" label="Battery power within inverter">
+        <inputExpression id="InputExpression_BatteryCheck_PowerWithinInverter" typeRef="boolean">
+          <text>system.batteryKw &lt;= system.inverterKw</text>
+        </inputExpression>
+      </input>
+      <input id="Input_BatteryCheck_CapacityWithinLimit" label="Capacity within limit">
+        <inputExpression id="InputExpression_BatteryCheck_CapacityWithinLimit" typeRef="boolean">
+          <text>system.batteryKwh &lt;= (if applicant.type = "FACTORY" then 2000 else 30)</text>
+        </inputExpression>
+      </input>
+      <input id="Input_BatteryCheck_AllBatteriesCertified" label="All batteries certified">
+        <inputExpression id="InputExpression_BatteryCheck_AllBatteriesCertified" typeRef="boolean">
+          <text>every d in devices[type = "BATTERY"] satisfies d.certificateId != null</text>
+        </inputExpression>
+      </input>
+      <output id="Output_BatteryCheck_BatteryOk" label="Battery OK" name="batteryOk" typeRef="boolean" />
+      <rule id="BatteryCheck_PowerAboveInverter">
+        <description>Battery power (kW) is higher than the inverter rating, so the inverter cannot carry it.</description>
+        <inputEntry id="UnaryTests_BatteryCheck_PowerAboveInverter_1"><text>false</text></inputEntry>
+        <inputEntry id="UnaryTests_BatteryCheck_PowerAboveInverter_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_BatteryCheck_PowerAboveInverter_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_BatteryCheck_PowerAboveInverter_1"><text>false</text></outputEntry>
+      </rule>
+      <rule id="BatteryCheck_CapacityAboveLimit">
+        <description>Battery capacity is above the limit: 30 kWh for a home, 2000 kWh for a factory.</description>
+        <inputEntry id="UnaryTests_BatteryCheck_CapacityAboveLimit_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_BatteryCheck_CapacityAboveLimit_2"><text>false</text></inputEntry>
+        <inputEntry id="UnaryTests_BatteryCheck_CapacityAboveLimit_3"><text>-</text></inputEntry>
+        <outputEntry id="LiteralExpression_BatteryCheck_CapacityAboveLimit_1"><text>false</text></outputEntry>
+      </rule>
+      <rule id="BatteryCheck_BatteryUncertified">
+        <description>At least one battery device has no certificate id.</description>
+        <inputEntry id="UnaryTests_BatteryCheck_BatteryUncertified_1"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_BatteryCheck_BatteryUncertified_2"><text>-</text></inputEntry>
+        <inputEntry id="UnaryTests_BatteryCheck_BatteryUncertified_3"><text>false</text></inputEntry>
+        <outputEntry id="LiteralExpression_BatteryCheck_BatteryUncertified_1"><text>false</text></outputEntry>
+      </rule>
+      <rule id="BatteryCheck_AllPassed">
+        <description>Power, capacity and certificates are all fine: the battery is accepted without review.</description>
+        <inputEntry id="UnaryTests_BatteryCheck_AllPassed_1"><text>true</text></inputEntry>
+        <inputEntry id="UnaryTests_BatteryCheck_AllPassed_2"><text>true</text></inputEntry>
+        <inputEntry id="UnaryTests_BatteryCheck_AllPassed_3"><text>true</text></inputEntry>
+        <outputEntry id="LiteralExpression_BatteryCheck_AllPassed_1"><text>true</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_BatteryCheck">
+      <dmndi:DMNShape id="DMNShape_BatteryCheck" dmnElementRef="BatteryCheck">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

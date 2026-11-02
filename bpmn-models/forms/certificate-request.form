@@ -1,0 +1,35 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\nThis device has no valid certificate. Get one from the maker or installer.\n\n**Serial number:** {{device.serialNumber}}\n\n**Model:** {{device.model}}",
+      "layout": {
+        "row": "Row_74b4d4b",
+        "columns": null
+      },
+      "id": "Field_253875e"
+    },
+    {
+      "type": "textfield",
+      "key": "newCertificateId",
+      "label": "New certificate ID",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_75d19cc",
+        "columns": null
+      },
+      "id": "Field_84f46c5"
+    }
+  ],
+  "type": "default",
+  "id": "certificate-request",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

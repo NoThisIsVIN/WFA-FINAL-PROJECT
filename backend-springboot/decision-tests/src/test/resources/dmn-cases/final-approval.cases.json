@@ -1,0 +1,471 @@
+{
+  "dmnFile": "final-approval.dmn",
+  "cases": [
+    {
+      "name": "All passed, grid OK, battery OK, SMALL -> AUTO_APPROVE",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "PASS"
+          }
+        ],
+        "gridLoadStatus": "OK",
+        "batteryOk": true,
+        "classification": {
+          "sizeClass": "SMALL"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "AUTO_APPROVE",
+        "reason": "all checks passed"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_AllChecksPassed"
+        ]
+      }
+    },
+    {
+      "name": "No battery (batteryOk null) -> AUTO_APPROVE, null does not hit the battery row",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "PASS"
+          }
+        ],
+        "gridLoadStatus": "OK",
+        "batteryOk": null,
+        "classification": {
+          "sizeClass": "SMALL"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "AUTO_APPROVE",
+        "reason": "all checks passed"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_AllChecksPassed"
+        ]
+      }
+    },
+    {
+      "name": "Grid WARNING, MEDIUM -> AUTO_APPROVE",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "PASS"
+          }
+        ],
+        "gridLoadStatus": "WARNING",
+        "batteryOk": true,
+        "classification": {
+          "sizeClass": "MEDIUM"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "AUTO_APPROVE",
+        "reason": "all checks passed"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_AllChecksPassed"
+        ]
+      }
+    },
+    {
+      "name": "MICRO, empty inspection list -> AUTO_APPROVE",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [],
+        "gridLoadStatus": "OK",
+        "batteryOk": true,
+        "classification": {
+          "sizeClass": "MICRO"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "AUTO_APPROVE",
+        "reason": "all checks passed"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_AllChecksPassed"
+        ]
+      }
+    },
+    {
+      "name": "Grid OVERLOAD, no export limit -> REJECT",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "PASS"
+          }
+        ],
+        "gridLoadStatus": "OVERLOAD",
+        "batteryOk": true,
+        "classification": {
+          "sizeClass": "SMALL"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "REJECT",
+        "reason": "grid still overloaded"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_GridOverloaded"
+        ]
+      }
+    },
+    {
+      "name": "FIRST precedence: OVERLOAD and failed devices -> REJECT",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "CRITICAL"
+          }
+        ],
+        "gridLoadStatus": "OVERLOAD",
+        "batteryOk": false,
+        "classification": {
+          "sizeClass": "SMALL"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "REJECT",
+        "reason": "grid still overloaded"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_GridOverloaded"
+        ]
+      }
+    },
+    {
+      "name": "OVERLOAD but export limit applied -> MANUAL_REVIEW export limit",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "PASS"
+          }
+        ],
+        "gridLoadStatus": "OVERLOAD",
+        "batteryOk": true,
+        "classification": {
+          "sizeClass": "SMALL"
+        },
+        "exportLimited": true
+      },
+      "expected": {
+        "decision": "MANUAL_REVIEW",
+        "reason": "export limit applied"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_ExportLimited"
+        ]
+      }
+    },
+    {
+      "name": "One device MINOR -> MANUAL_REVIEW some devices failed",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "MINOR"
+          }
+        ],
+        "gridLoadStatus": "OK",
+        "batteryOk": true,
+        "classification": {
+          "sizeClass": "SMALL"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "MANUAL_REVIEW",
+        "reason": "some devices failed"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_DevicesFailed"
+        ]
+      },
+      "refs": [
+        "F22"
+      ]
+    },
+    {
+      "name": "FIRST precedence: failed devices beat battery false and LARGE",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "CRITICAL"
+          }
+        ],
+        "gridLoadStatus": "OK",
+        "batteryOk": false,
+        "classification": {
+          "sizeClass": "LARGE"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "MANUAL_REVIEW",
+        "reason": "some devices failed"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_DevicesFailed"
+        ]
+      },
+      "refs": [
+        "F22"
+      ]
+    },
+    {
+      "name": "Battery failed check, accepted by engineer -> MANUAL_REVIEW",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "PASS"
+          }
+        ],
+        "gridLoadStatus": "OK",
+        "batteryOk": false,
+        "classification": {
+          "sizeClass": "SMALL"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "MANUAL_REVIEW",
+        "reason": "battery accepted by engineer"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_BatteryAcceptedByEngineer"
+        ]
+      },
+      "refs": [
+        "F13"
+      ]
+    },
+    {
+      "name": "Grid CRITICAL -> MANUAL_REVIEW grid near its limit",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "PASS"
+          }
+        ],
+        "gridLoadStatus": "CRITICAL",
+        "batteryOk": true,
+        "classification": {
+          "sizeClass": "SMALL"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "MANUAL_REVIEW",
+        "reason": "grid near its limit"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_GridCritical"
+        ]
+      }
+    },
+    {
+      "name": "LARGE system -> MANUAL_REVIEW large system",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "PASS"
+          }
+        ],
+        "gridLoadStatus": "OK",
+        "batteryOk": true,
+        "classification": {
+          "sizeClass": "LARGE"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "MANUAL_REVIEW",
+        "reason": "large system"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_LargeSystem"
+        ]
+      }
+    },
+    {
+      "name": "Export limited on an OK grid -> MANUAL_REVIEW export limit applied",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "PASS"
+          }
+        ],
+        "gridLoadStatus": "OK",
+        "batteryOk": true,
+        "classification": {
+          "sizeClass": "SMALL"
+        },
+        "exportLimited": true
+      },
+      "expected": {
+        "decision": "MANUAL_REVIEW",
+        "reason": "export limit applied"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_ExportLimited"
+        ]
+      }
+    },
+    {
+      "name": "Size class UNKNOWN -> MANUAL_REVIEW no rule matched",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "PASS"
+          }
+        ],
+        "gridLoadStatus": "OK",
+        "batteryOk": true,
+        "classification": {
+          "sizeClass": "UNKNOWN"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "MANUAL_REVIEW",
+        "reason": "no rule matched"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_NoRuleMatched"
+        ]
+      },
+      "refs": [
+        "F06"
+      ]
+    },
+    {
+      "name": "Grid status missing -> MANUAL_REVIEW no rule matched",
+      "decisionId": "FinalApproval",
+      "variables": {
+        "inspectionResults": [
+          {
+            "serialNumber": "DEV-001",
+            "outcome": "PASS"
+          },
+          {
+            "serialNumber": "DEV-002",
+            "outcome": "PASS"
+          }
+        ],
+        "batteryOk": true,
+        "classification": {
+          "sizeClass": "SMALL"
+        },
+        "exportLimited": false
+      },
+      "expected": {
+        "decision": "MANUAL_REVIEW",
+        "reason": "no rule matched"
+      },
+      "expectedMatchedRules": {
+        "FinalApproval": [
+          "FinalApproval_NoRuleMatched"
+        ]
+      },
+      "refs": [
+        "F06"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="tariff-rate" name="Tariff rate" namespace="http://metrocitypower.example/dmn" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <decision id="TariffRate" name="Tariff rate">
+    <description>Metro City Power feed-in tariff by financial year and inverter size (result variable tariff; the task maps contractDate = today()). UNIQUE: date ranges and size bands do not overlap. A date outside both years matches nothing and gives null.</description>
+    <decisionTable id="DecisionTable_TariffRate" hitPolicy="UNIQUE">
+      <input id="Input_TariffRate_ContractDate" label="Contract date">
+        <inputExpression id="InputExpression_TariffRate_ContractDate" typeRef="date">
+          <text>date(contractDate)</text>
+        </inputExpression>
+      </input>
+      <input id="Input_TariffRate_InverterKw" label="Inverter kW">
+        <inputExpression id="InputExpression_TariffRate_InverterKw" typeRef="number">
+          <text>system.inverterKw</text>
+        </inputExpression>
+      </input>
+      <output id="Output_TariffRate_TariffCode" label="Tariff code" name="tariffCode" typeRef="string" />
+      <output id="Output_TariffRate_RatePerKwhRs" label="Rate per kWh (Rs)" name="ratePerKwhRs" typeRef="number" />
+      <rule id="TariffRate_Fy26Small">
+        <description>FY 2026-27, up to 10 kW: small feed-in tariff.</description>
+        <inputEntry id="UnaryTests_TariffRate_Fy26Small_1"><text>[date("2026-04-01")..date("2027-03-31")]</text></inputEntry>
+        <inputEntry id="UnaryTests_TariffRate_Fy26Small_2"><text>&lt;= 10</text></inputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy26Small_1"><text>"FIT-S-26"</text></outputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy26Small_2"><text>3.10</text></outputEntry>
+      </rule>
+      <rule id="TariffRate_Fy26Medium">
+        <description>FY 2026-27, above 10 kW up to 100 kW: medium feed-in tariff.</description>
+        <inputEntry id="UnaryTests_TariffRate_Fy26Medium_1"><text>[date("2026-04-01")..date("2027-03-31")]</text></inputEntry>
+        <inputEntry id="UnaryTests_TariffRate_Fy26Medium_2"><text>]10..100]</text></inputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy26Medium_1"><text>"FIT-M-26"</text></outputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy26Medium_2"><text>2.85</text></outputEntry>
+      </rule>
+      <rule id="TariffRate_Fy26Large">
+        <description>FY 2026-27, above 100 kW: large feed-in tariff.</description>
+        <inputEntry id="UnaryTests_TariffRate_Fy26Large_1"><text>[date("2026-04-01")..date("2027-03-31")]</text></inputEntry>
+        <inputEntry id="UnaryTests_TariffRate_Fy26Large_2"><text>&gt; 100</text></inputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy26Large_1"><text>"FIT-L-26"</text></outputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy26Large_2"><text>2.60</text></outputEntry>
+      </rule>
+      <rule id="TariffRate_Fy27Small">
+        <description>FY 2027-28, up to 10 kW: small feed-in tariff.</description>
+        <inputEntry id="UnaryTests_TariffRate_Fy27Small_1"><text>[date("2027-04-01")..date("2028-03-31")]</text></inputEntry>
+        <inputEntry id="UnaryTests_TariffRate_Fy27Small_2"><text>&lt;= 10</text></inputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy27Small_1"><text>"FIT-S-27"</text></outputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy27Small_2"><text>3.00</text></outputEntry>
+      </rule>
+      <rule id="TariffRate_Fy27Medium">
+        <description>FY 2027-28, above 10 kW up to 100 kW: medium feed-in tariff.</description>
+        <inputEntry id="UnaryTests_TariffRate_Fy27Medium_1"><text>[date("2027-04-01")..date("2028-03-31")]</text></inputEntry>
+        <inputEntry id="UnaryTests_TariffRate_Fy27Medium_2"><text>]10..100]</text></inputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy27Medium_1"><text>"FIT-M-27"</text></outputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy27Medium_2"><text>2.75</text></outputEntry>
+      </rule>
+      <rule id="TariffRate_Fy27Large">
+        <description>FY 2027-28, above 100 kW: large feed-in tariff.</description>
+        <inputEntry id="UnaryTests_TariffRate_Fy27Large_1"><text>[date("2027-04-01")..date("2028-03-31")]</text></inputEntry>
+        <inputEntry id="UnaryTests_TariffRate_Fy27Large_2"><text>&gt; 100</text></inputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy27Large_1"><text>"FIT-L-27"</text></outputEntry>
+        <outputEntry id="LiteralExpression_TariffRate_Fy27Large_2"><text>2.50</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_TariffRate">
+      <dmndi:DMNShape id="DMNShape_TariffRate" dmnElementRef="TariffRate">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

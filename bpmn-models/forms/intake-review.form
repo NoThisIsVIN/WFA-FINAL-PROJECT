@@ -1,0 +1,43 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\n**System:** {{system.pvKw}} kW panels, {{system.inverterKw}} kW inverter, {{system.batteryKwh}} kWh battery\n\n**Site:** {{site.address}}, region {{site.region}}\n\n**Missing items:**\n\n{{#loop validation.missing}}- {{this}}\n{{/loop}}",
+      "layout": {
+        "row": "Row_b7844c0",
+        "columns": null
+      },
+      "id": "Field_03dcd39"
+    },
+    {
+      "type": "checkbox",
+      "key": "intakeAccepted",
+      "label": "Accept the application (tick if it can go ahead)",
+      "defaultValue": false,
+      "layout": {
+        "row": "Row_8c653a4",
+        "columns": null
+      },
+      "id": "Field_2c8805a"
+    },
+    {
+      "type": "textarea",
+      "key": "intakeNote",
+      "label": "Note for the applicant or file",
+      "layout": {
+        "row": "Row_0367690",
+        "columns": null
+      },
+      "id": "Field_e2a7a85"
+    }
+  ],
+  "type": "default",
+  "id": "intake-review",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

@@ -1,0 +1,49 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\nThe portal could not deliver the certificate. Post it by hand.\n\n**Address:** {{site.address}}\n\n**Certificate:** {{certificate.id}}",
+      "layout": {
+        "row": "Row_ef22681",
+        "columns": null
+      },
+      "id": "Field_d9c975c"
+    },
+    {
+      "type": "textfield",
+      "key": "trackingNo",
+      "label": "Postal tracking number",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_26c4886",
+        "columns": null
+      },
+      "id": "Field_7aa101a"
+    },
+    {
+      "type": "datetime",
+      "key": "postedOn",
+      "subtype": "date",
+      "dateLabel": "Posted on",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_4a7f670",
+        "columns": null
+      },
+      "id": "Field_fbe17fd"
+    }
+  ],
+  "type": "default",
+  "id": "manual-post",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

@@ -1,0 +1,73 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\nThe grid needs an upgrade before this system can connect.\n\n**Substation:** {{site.substationId}}\n\n**Projected load:** {{projectedLoadPct}} %",
+      "layout": {
+        "row": "Row_44bff5c",
+        "columns": null
+      },
+      "id": "Field_bee3fc2"
+    },
+    {
+      "type": "select",
+      "key": "upgradeOption",
+      "label": "Upgrade option",
+      "values": [
+        {
+          "label": "Install a new transformer",
+          "value": "NEW_TRANSFORMER"
+        },
+        {
+          "label": "Reinforce the feeder line",
+          "value": "REINFORCE_FEEDER"
+        }
+      ],
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_13b7b7e",
+        "columns": null
+      },
+      "id": "Field_ef14db7"
+    },
+    {
+      "type": "number",
+      "key": "upgradeCostRs",
+      "label": "Total upgrade cost (₹)",
+      "validate": {
+        "required": true,
+        "min": 0
+      },
+      "layout": {
+        "row": "Row_cfa9948",
+        "columns": null
+      },
+      "id": "Field_db9d4a1"
+    },
+    {
+      "type": "number",
+      "key": "applicantShareRs",
+      "label": "Applicant share of the cost (₹)",
+      "validate": {
+        "required": true,
+        "min": 0
+      },
+      "layout": {
+        "row": "Row_e9b43b4",
+        "columns": null
+      },
+      "id": "Field_4505389"
+    }
+  ],
+  "type": "default",
+  "id": "upgrade-plan",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

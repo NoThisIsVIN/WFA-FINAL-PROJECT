@@ -1,0 +1,58 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\nThe local grid cannot take this system as it is.\n\n**Inverter size:** {{system.inverterKw}} kW\n\n**Grid load status:** {{gridLoadStatus}}",
+      "layout": {
+        "row": "Row_5c88993",
+        "columns": null
+      },
+      "id": "Field_1a531d0"
+    },
+    {
+      "type": "radio",
+      "key": "capacityDecision",
+      "label": "Decision",
+      "values": [
+        {
+          "label": "Allow with an export limit",
+          "value": "LIMIT"
+        },
+        {
+          "label": "Reject the connection",
+          "value": "REJECT"
+        }
+      ],
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_10898c8",
+        "columns": null
+      },
+      "id": "Field_4361c9f"
+    },
+    {
+      "type": "number",
+      "key": "exportLimitKw",
+      "label": "Export limit (kW), only if limiting",
+      "validate": {
+        "min": 0
+      },
+      "layout": {
+        "row": "Row_d1ad668",
+        "columns": null
+      },
+      "id": "Field_1343233"
+    }
+  ],
+  "type": "default",
+  "id": "capacity-review",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

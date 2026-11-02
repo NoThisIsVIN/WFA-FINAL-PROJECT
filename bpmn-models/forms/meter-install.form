@@ -1,0 +1,49 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\nInstall the smart meter at the site.\n\n**Current meter ID:** {{site.meterId}}",
+      "layout": {
+        "row": "Row_5b0f4aa",
+        "columns": null
+      },
+      "id": "Field_3b159e4"
+    },
+    {
+      "type": "textfield",
+      "key": "meterSerial",
+      "label": "New smart meter serial number",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_73df468",
+        "columns": null
+      },
+      "id": "Field_ae5343e"
+    },
+    {
+      "type": "datetime",
+      "key": "meterInstalledOn",
+      "subtype": "date",
+      "dateLabel": "Installed on",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_91dfbff",
+        "columns": null
+      },
+      "id": "Field_7867f0e"
+    }
+  ],
+  "type": "default",
+  "id": "meter-install",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

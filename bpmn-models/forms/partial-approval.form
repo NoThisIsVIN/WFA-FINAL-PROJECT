@@ -1,0 +1,43 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\nSome devices did not pass inspection.\n\n**Inspection results:**\n\n{{#loop inspectionResults}}- {{serialNumber}}: {{outcome}}\n{{/loop}}",
+      "layout": {
+        "row": "Row_8f88b95",
+        "columns": null
+      },
+      "id": "Field_7bfff26"
+    },
+    {
+      "type": "checkbox",
+      "key": "partialContinue",
+      "label": "Continue with only the devices that passed",
+      "defaultValue": false,
+      "layout": {
+        "row": "Row_3019311",
+        "columns": null
+      },
+      "id": "Field_a0f44e4"
+    },
+    {
+      "type": "textarea",
+      "key": "partialNote",
+      "label": "Note",
+      "layout": {
+        "row": "Row_f47a246",
+        "columns": null
+      },
+      "id": "Field_ee19cb6"
+    }
+  ],
+  "type": "default",
+  "id": "partial-approval",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}

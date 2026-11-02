@@ -1,0 +1,46 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\n**Why this needs review:** {{approval.reason}}\n\n**First approver:** {{firstApproverId}}",
+      "layout": {
+        "row": "Row_af6bb5f",
+        "columns": null
+      },
+      "id": "Field_20db67a"
+    },
+    {
+      "type": "textfield",
+      "key": "secondApproverId",
+      "label": "Your staff ID (must differ from the first approver)",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_44ed4ee",
+        "columns": null
+      },
+      "id": "Field_1f73d43"
+    },
+    {
+      "type": "checkbox",
+      "key": "secondApproved",
+      "label": "I approve this connection",
+      "defaultValue": false,
+      "layout": {
+        "row": "Row_9131e7f",
+        "columns": null
+      },
+      "id": "Field_5c07c54"
+    }
+  ],
+  "type": "default",
+  "id": "second-approval",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.10.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.49.0"
+  },
+  "schemaVersion": 19
+}
