@@ -5,7 +5,6 @@
 | `processes/` | BPMN processes (main approval, smart meter + tariff contract) |
 | `decisions/` | DMN decision tables |
 | `forms/` | Camunda forms for user tasks |
-| `deploy/` | `start-all.ps1`, `stop-all.ps1`, `deploy.ps1` for local c8run |
 | `diagrams/` | PNG exports for the report |
 
 ## Lint
@@ -16,9 +15,6 @@ npm install
 npm run lint
 ```
 
-## Deploy (c8run running on localhost:8080)
+## Deploy
 
-```powershell
-powershell -File bpmn-models\deploy\start-all.ps1
-powershell -File bpmn-models\deploy\deploy.ps1
-```
+Open the files in Camunda Modeler and deploy them to the local c8run (http://localhost:8080). Deploy the processes, decisions and forms together, because the user tasks link to forms in the same deployment.
