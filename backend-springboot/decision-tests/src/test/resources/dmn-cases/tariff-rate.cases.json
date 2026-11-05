@@ -1,0 +1,304 @@
+{
+  "dmnFile": "tariff-rate.dmn",
+  "cases": [
+    {
+      "name": "2026-11-02, 5 kW -> FIT-S-26 Rs 3.10",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2026-11-02",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 5,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "expected": {
+        "tariffCode": "FIT-S-26",
+        "ratePerKwhRs": 3.1
+      },
+      "expectedMatchedRules": {
+        "TariffRate": [
+          "TariffRate_Fy26Small"
+        ]
+      }
+    },
+    {
+      "name": "Boundary: first day of FY 2026-27 (2026-04-01), 5 kW -> FIT-S-26",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2026-04-01",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 5,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "expected": {
+        "tariffCode": "FIT-S-26",
+        "ratePerKwhRs": 3.1
+      },
+      "expectedMatchedRules": {
+        "TariffRate": [
+          "TariffRate_Fy26Small"
+        ]
+      }
+    },
+    {
+      "name": "Boundary: exactly 10 kW -> small band FIT-S-26",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2026-11-02",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 10,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "expected": {
+        "tariffCode": "FIT-S-26",
+        "ratePerKwhRs": 3.1
+      },
+      "expectedMatchedRules": {
+        "TariffRate": [
+          "TariffRate_Fy26Small"
+        ]
+      }
+    },
+    {
+      "name": "10.5 kW -> medium band FIT-M-26 Rs 2.85",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2026-11-02",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 10.5,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "expected": {
+        "tariffCode": "FIT-M-26",
+        "ratePerKwhRs": 2.85
+      },
+      "expectedMatchedRules": {
+        "TariffRate": [
+          "TariffRate_Fy26Medium"
+        ]
+      }
+    },
+    {
+      "name": "Boundary: exactly 100 kW on last day of FY 2026-27 (2027-03-31) -> FIT-M-26",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2027-03-31",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 100,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "expected": {
+        "tariffCode": "FIT-M-26",
+        "ratePerKwhRs": 2.85
+      },
+      "expectedMatchedRules": {
+        "TariffRate": [
+          "TariffRate_Fy26Medium"
+        ]
+      }
+    },
+    {
+      "name": "100.5 kW -> large band FIT-L-26 Rs 2.60",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2026-11-02",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 100.5,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "expected": {
+        "tariffCode": "FIT-L-26",
+        "ratePerKwhRs": 2.6
+      },
+      "expectedMatchedRules": {
+        "TariffRate": [
+          "TariffRate_Fy26Large"
+        ]
+      }
+    },
+    {
+      "name": "Boundary: first day of FY 2027-28 (2027-04-01), 5 kW -> FIT-S-27 Rs 3.00",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2027-04-01",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 5,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "expected": {
+        "tariffCode": "FIT-S-27",
+        "ratePerKwhRs": 3.0
+      },
+      "expectedMatchedRules": {
+        "TariffRate": [
+          "TariffRate_Fy27Small"
+        ]
+      }
+    },
+    {
+      "name": "2027-10-15, exactly 100 kW -> FIT-M-27 Rs 2.75",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2027-10-15",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 100,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "expected": {
+        "tariffCode": "FIT-M-27",
+        "ratePerKwhRs": 2.75
+      },
+      "expectedMatchedRules": {
+        "TariffRate": [
+          "TariffRate_Fy27Medium"
+        ]
+      }
+    },
+    {
+      "name": "Boundary: last day of FY 2027-28 (2028-03-31), 250 kW -> FIT-L-27 Rs 2.50",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2028-03-31",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 250,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "expected": {
+        "tariffCode": "FIT-L-27",
+        "ratePerKwhRs": 2.5
+      },
+      "expectedMatchedRules": {
+        "TariffRate": [
+          "TariffRate_Fy27Large"
+        ]
+      }
+    },
+    {
+      "name": "Day before FY 2026-27 (2026-03-31) -> null",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2026-03-31",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 5,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "expectNull": true,
+      "expectedMatchedRules": {
+        "TariffRate": []
+      }
+    },
+    {
+      "name": "Day after FY 2027-28 (2028-04-01) -> null",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2028-04-01",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 5,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "expectNull": true,
+      "expectedMatchedRules": {
+        "TariffRate": []
+      }
+    }
+  ],
+  "sweeps": [
+    {
+      "name": "TariffRate UNIQUE never overlaps: inverter kW 0..150 x contract dates",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2026-11-02",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 5,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "vary": {
+        "system.inverterKw": {
+          "from": 0,
+          "to": 150,
+          "step": 0.5
+        },
+        "contractDate": [
+          "2026-03-31",
+          "2026-04-01",
+          "2026-11-02",
+          "2027-03-31",
+          "2027-04-01",
+          "2027-10-15",
+          "2028-03-31",
+          "2028-04-01"
+        ]
+      },
+      "assert": "noFailure"
+    },
+    {
+      "name": "TariffRate UNIQUE never overlaps: band edges x contract dates",
+      "decisionId": "TariffRate",
+      "variables": {
+        "contractDate": "2026-11-02",
+        "system": {
+          "pvKw": 6.5,
+          "inverterKw": 5,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        }
+      },
+      "vary": {
+        "system.inverterKw": [
+          -1,
+          0,
+          9.99,
+          10,
+          10.01,
+          99.99,
+          100,
+          100.01,
+          1000,
+          null
+        ],
+        "contractDate": [
+          "2026-04-01",
+          "2027-03-31",
+          "2027-04-01",
+          "2028-03-31"
+        ]
+      },
+      "assert": "noFailure"
+    }
+  ]
+}

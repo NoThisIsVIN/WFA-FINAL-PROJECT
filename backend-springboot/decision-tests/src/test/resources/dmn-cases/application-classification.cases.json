@@ -1,0 +1,525 @@
+{
+  "dmnFile": "application-classification.dmn",
+  "cases": [
+    {
+      "name": "MICRO home 0.8 kW -> self declaration only, fee 0, LOW",
+      "decisionId": "ApplicationClassification",
+      "variables": {
+        "system": {
+          "pvKw": 0.96,
+          "inverterKw": 0.8,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": false
+      },
+      "expected": {
+        "sizeClass": "MICRO",
+        "requiredDocuments": [
+          "SELF_DECLARATION"
+        ],
+        "connectionFeeRs": 0,
+        "priority": "LOW"
+      },
+      "expectedMatchedRules": {
+        "SizeClass": [
+          "SizeClass_Micro"
+        ],
+        "RequiredDocuments": [
+          "RequiredDocuments_SelfDeclaration"
+        ],
+        "ConnectionFee": [
+          "ConnectionFee_Micro"
+        ],
+        "CasePriority": [
+          "CasePriority_MicroLow"
+        ]
+      },
+      "refs": [
+        "F07"
+      ]
+    },
+    {
+      "name": "SMALL home 5 kW with battery -> photos, certificate, datasheet, Rs 2500, NORMAL",
+      "decisionId": "ApplicationClassification",
+      "variables": {
+        "system": {
+          "pvKw": 6,
+          "inverterKw": 5,
+          "batteryKwh": 10,
+          "batteryKw": 4
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": true
+      },
+      "expected": {
+        "sizeClass": "SMALL",
+        "requiredDocuments": [
+          "SITE_PHOTOS",
+          "INVERTER_CERTIFICATE",
+          "BATTERY_DATASHEET"
+        ],
+        "connectionFeeRs": 2500,
+        "priority": "NORMAL"
+      },
+      "expectedMatchedRules": {
+        "RequiredDocuments": [
+          "RequiredDocuments_SitePhotos",
+          "RequiredDocuments_InverterCertificate",
+          "RequiredDocuments_BatteryDatasheet"
+        ],
+        "ConnectionFee": [
+          "ConnectionFee_Small",
+          "ConnectionFee_Battery"
+        ],
+        "CasePriority": [
+          "CasePriority_Normal"
+        ]
+      }
+    },
+    {
+      "name": "MEDIUM factory 50 kW -> 5 documents, Rs 12500, HIGH",
+      "decisionId": "ApplicationClassification",
+      "variables": {
+        "system": {
+          "pvKw": 60,
+          "inverterKw": 50,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "FACTORY"
+        },
+        "hasBattery": false
+      },
+      "expected": {
+        "sizeClass": "MEDIUM",
+        "requiredDocuments": [
+          "SITE_PHOTOS",
+          "INVERTER_CERTIFICATE",
+          "SINGLE_LINE_DIAGRAM",
+          "STRUCTURAL_REPORT",
+          "FACTORY_LICENCE"
+        ],
+        "connectionFeeRs": 12500,
+        "priority": "HIGH"
+      },
+      "expectedMatchedRules": {
+        "RequiredDocuments": [
+          "RequiredDocuments_SitePhotos",
+          "RequiredDocuments_InverterCertificate",
+          "RequiredDocuments_SingleLineDiagram",
+          "RequiredDocuments_StructuralReportFactory",
+          "RequiredDocuments_FactoryLicence"
+        ],
+        "ConnectionFee": [
+          "ConnectionFee_Medium",
+          "ConnectionFee_Factory"
+        ],
+        "CasePriority": [
+          "CasePriority_FactoryHigh",
+          "CasePriority_Normal"
+        ]
+      }
+    },
+    {
+      "name": "LARGE home 150 kW with battery -> structural report, Rs 26000, HIGH",
+      "decisionId": "ApplicationClassification",
+      "variables": {
+        "system": {
+          "pvKw": 180,
+          "inverterKw": 150,
+          "batteryKwh": 200,
+          "batteryKw": 4
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": true
+      },
+      "expected": {
+        "sizeClass": "LARGE",
+        "requiredDocuments": [
+          "SITE_PHOTOS",
+          "INVERTER_CERTIFICATE",
+          "SINGLE_LINE_DIAGRAM",
+          "STRUCTURAL_REPORT",
+          "BATTERY_DATASHEET"
+        ],
+        "connectionFeeRs": 26000,
+        "priority": "HIGH"
+      },
+      "expectedMatchedRules": {
+        "RequiredDocuments": [
+          "RequiredDocuments_SitePhotos",
+          "RequiredDocuments_InverterCertificate",
+          "RequiredDocuments_SingleLineDiagram",
+          "RequiredDocuments_StructuralReportLarge",
+          "RequiredDocuments_BatteryDatasheet"
+        ],
+        "ConnectionFee": [
+          "ConnectionFee_Large",
+          "ConnectionFee_Battery"
+        ],
+        "CasePriority": [
+          "CasePriority_LargeHigh",
+          "CasePriority_Normal"
+        ]
+      }
+    },
+    {
+      "name": "LARGE factory 250 kW -> structural report listed once, Rs 30000, HIGH",
+      "decisionId": "ApplicationClassification",
+      "variables": {
+        "system": {
+          "pvKw": 300,
+          "inverterKw": 250,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "FACTORY"
+        },
+        "hasBattery": false
+      },
+      "expected": {
+        "sizeClass": "LARGE",
+        "requiredDocuments": [
+          "SITE_PHOTOS",
+          "INVERTER_CERTIFICATE",
+          "SINGLE_LINE_DIAGRAM",
+          "STRUCTURAL_REPORT",
+          "FACTORY_LICENCE"
+        ],
+        "connectionFeeRs": 30000,
+        "priority": "HIGH"
+      },
+      "expectedMatchedRules": {
+        "RequiredDocuments": [
+          "RequiredDocuments_SitePhotos",
+          "RequiredDocuments_InverterCertificate",
+          "RequiredDocuments_SingleLineDiagram",
+          "RequiredDocuments_StructuralReportLarge",
+          "RequiredDocuments_FactoryLicence"
+        ],
+        "CasePriority": [
+          "CasePriority_LargeHigh",
+          "CasePriority_FactoryHigh",
+          "CasePriority_Normal"
+        ]
+      }
+    },
+    {
+      "name": "MICRO factory 1 kW -> HIGH beats LOW, Rs 5000",
+      "decisionId": "ApplicationClassification",
+      "variables": {
+        "system": {
+          "pvKw": 1.2,
+          "inverterKw": 1,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "FACTORY"
+        },
+        "hasBattery": false
+      },
+      "expected": {
+        "sizeClass": "MICRO",
+        "requiredDocuments": [
+          "SELF_DECLARATION",
+          "STRUCTURAL_REPORT",
+          "FACTORY_LICENCE"
+        ],
+        "connectionFeeRs": 5000,
+        "priority": "HIGH"
+      },
+      "expectedMatchedRules": {
+        "CasePriority": [
+          "CasePriority_FactoryHigh",
+          "CasePriority_MicroLow"
+        ]
+      }
+    },
+    {
+      "name": "Missing inverter size -> UNKNOWN, no documents, fee 0 (F06)",
+      "decisionId": "ApplicationClassification",
+      "variables": {
+        "system": {
+          "pvKw": null,
+          "inverterKw": null,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": false
+      },
+      "expected": {
+        "sizeClass": "UNKNOWN",
+        "requiredDocuments": [],
+        "connectionFeeRs": 0,
+        "priority": "NORMAL"
+      },
+      "expectedMatchedRules": {
+        "SizeClass": [
+          "SizeClass_Unknown"
+        ],
+        "RequiredDocuments": [],
+        "ConnectionFee": []
+      },
+      "refs": [
+        "F06"
+      ]
+    },
+    {
+      "name": "Boundary: exactly 1 kW -> MICRO",
+      "decisionId": "SizeClass",
+      "variables": {
+        "system": {
+          "pvKw": 1.2,
+          "inverterKw": 1,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": false
+      },
+      "expected": "MICRO",
+      "expectedMatchedRules": {
+        "SizeClass": [
+          "SizeClass_Micro"
+        ]
+      }
+    },
+    {
+      "name": "Boundary: 1.01 kW -> SMALL",
+      "decisionId": "SizeClass",
+      "variables": {
+        "system": {
+          "pvKw": 1.212,
+          "inverterKw": 1.01,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": false
+      },
+      "expected": "SMALL",
+      "expectedMatchedRules": {
+        "SizeClass": [
+          "SizeClass_Small"
+        ]
+      }
+    },
+    {
+      "name": "Boundary: exactly 10 kW -> SMALL",
+      "decisionId": "SizeClass",
+      "variables": {
+        "system": {
+          "pvKw": 12,
+          "inverterKw": 10,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": false
+      },
+      "expected": "SMALL",
+      "expectedMatchedRules": {
+        "SizeClass": [
+          "SizeClass_Small"
+        ]
+      }
+    },
+    {
+      "name": "Boundary: 10.01 kW -> MEDIUM",
+      "decisionId": "SizeClass",
+      "variables": {
+        "system": {
+          "pvKw": 12.011999999999999,
+          "inverterKw": 10.01,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": false
+      },
+      "expected": "MEDIUM",
+      "expectedMatchedRules": {
+        "SizeClass": [
+          "SizeClass_Medium"
+        ]
+      }
+    },
+    {
+      "name": "Boundary: exactly 100 kW -> MEDIUM",
+      "decisionId": "SizeClass",
+      "variables": {
+        "system": {
+          "pvKw": 120,
+          "inverterKw": 100,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": false
+      },
+      "expected": "MEDIUM",
+      "expectedMatchedRules": {
+        "SizeClass": [
+          "SizeClass_Medium"
+        ]
+      }
+    },
+    {
+      "name": "Boundary: 100.01 kW -> LARGE",
+      "decisionId": "SizeClass",
+      "variables": {
+        "system": {
+          "pvKw": 120.012,
+          "inverterKw": 100.01,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": false
+      },
+      "expected": "LARGE",
+      "expectedMatchedRules": {
+        "SizeClass": [
+          "SizeClass_Large"
+        ]
+      }
+    },
+    {
+      "name": "Zero kW -> UNKNOWN (F06)",
+      "decisionId": "SizeClass",
+      "variables": {
+        "system": {
+          "pvKw": 0,
+          "inverterKw": 0,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": false
+      },
+      "expected": "UNKNOWN",
+      "expectedMatchedRules": {
+        "SizeClass": [
+          "SizeClass_Unknown"
+        ]
+      },
+      "refs": [
+        "F06"
+      ]
+    },
+    {
+      "name": "Negative kW -> UNKNOWN (F06)",
+      "decisionId": "SizeClass",
+      "variables": {
+        "system": {
+          "pvKw": -6,
+          "inverterKw": -5,
+          "batteryKwh": 0,
+          "batteryKw": 0
+        },
+        "applicant": {
+          "name": "Test Applicant",
+          "email": "test@example.test",
+          "type": "HOME"
+        },
+        "hasBattery": false
+      },
+      "expected": "UNKNOWN",
+      "expectedMatchedRules": {
+        "SizeClass": [
+          "SizeClass_Unknown"
+        ]
+      },
+      "refs": [
+        "F06"
+      ]
+    }
+  ],
+  "sweeps": [
+    {
+      "name": "SizeClass has no gaps or overlaps from -10 to 300 kW",
+      "decisionId": "SizeClass",
+      "vary": {
+        "system.inverterKw": {
+          "from": -10,
+          "to": 300,
+          "step": 0.25
+        }
+      },
+      "assert": "nonNull"
+    },
+    {
+      "name": "ApplicationClassification never fails for any size and applicant type",
+      "decisionId": "ApplicationClassification",
+      "vary": {
+        "system.inverterKw": {
+          "from": 0,
+          "to": 200,
+          "step": 0.5
+        },
+        "applicant.type": [
+          "HOME",
+          "FACTORY",
+          "OTHER"
+        ]
+      },
+      "assert": "nonNull"
+    }
+  ]
+}

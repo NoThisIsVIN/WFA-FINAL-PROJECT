@@ -1,0 +1,27 @@
+server:
+  port: ${PORT:8090}
+
+spring:
+  application:
+    name: portal-api
+
+camunda:
+  # REST API v2 lives under {url}/v2
+  url: ${CAMUNDA_URL:http://localhost:8080}
+  user: ${CAMUNDA_USER:demo}
+  password: ${CAMUNDA_PASSWORD:demo}
+
+mocks:
+  url: ${MOCKS_URL:http://localhost:8091}
+
+portal:
+  cors-origins: ${PORTAL_CORS_ORIGINS:http://localhost:5173}
+  id-prefix: ${PORTAL_ID_PREFIX:APP-2026}
+  # application-submitted is buffered so the messageId (= submissionId) dedupes retries (F01)
+  submit-ttl-ms: ${PORTAL_SUBMIT_TTL_MS:3600000}
+  # other messages are buffered briefly so a click just before the wait state opens is not lost
+  message-ttl-ms: ${PORTAL_MESSAGE_TTL_MS:60000}
+
+logging:
+  level:
+    com.metrocitypower: INFO

@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: process-workers
+  main:
+    # No web server: this app only polls Camunda for jobs (port 8092 stays free).
+    web-application-type: none
+
+camunda:
+  client:
+    mode: self-managed
+    rest-address: ${CAMUNDA_REST_URL:http://localhost:8080}
+    grpc-address: ${CAMUNDA_GRPC_URL:http://localhost:26500}
+    # c8run 8.10 answers without auth; basic demo/demo is sent anyway and also works when auth is on.
+    auth:
+      method: basic
+      username: ${CAMUNDA_USER:demo}
+      password: ${CAMUNDA_PASSWORD:demo}
+    execution-threads: 4
+    worker:
+      defaults:
+        # Technical failures (mock 5xx, timeout) fail the job; Camunda retries (BPMN default 3) with
+        # this backoff and then raises an incident.
+        retry-backoff: PT5S
+        timeout: PT1M
+        max-jobs-active: 8
+
+mcp:
+  mocks-url: ${MOCKS_URL:http://localhost:8091}
+  portal-url: ${PORTAL_URL:http://localhost:8090}
+  http:
+    connect-timeout: 2s
+    request-timeout: 5s

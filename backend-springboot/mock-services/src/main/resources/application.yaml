@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: mock-services
+
+server:
+  port: 8091
+
+mocks:
+  # How long SLOW mode sleeps before answering normally.
+  slow-millis: 15000
+  esign:
+    webhook-url: ${ESIGN_WEBHOOK_URL:http://localhost:8086/inbound/mcp-esign-callback}
+    # Demo default only; set ESIGN_HMAC_SECRET to the same value as the webhook connector.
+    hmac-secret: ${ESIGN_HMAC_SECRET:demo-esign-secret}

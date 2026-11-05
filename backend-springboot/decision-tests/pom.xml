@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.metrocitypower</groupId>
+  <artifactId>decision-tests</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <name>DMN decision tests</name>
+  <description>
+    Table-driven tests and a rule-coverage report for every decision in bpmn-models/decisions.
+    Decisions are evaluated in-JVM with zeebe-dmn, the same DMN engine the Zeebe broker uses.
+    Optional: -Ddmn.remote=http://localhost:8080 also deploys the files to a running cluster and checks
+    that the REST evaluation API returns the same results.
+  </description>
+
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <camunda.version>8.10.7</camunda.version>
+    <jackson.version>2.22.1</jackson.version>
+    <msgpack.version>0.9.12</msgpack.version>
+    <junit.version>6.1.3</junit.version>
+    <assertj.version>3.27.7</assertj.version>
+
+    <!-- Overridable from the command line -->
+    <buildDir>${project.basedir}/target</buildDir>
+    <dmn.dir>${project.basedir}/../../bpmn-models/decisions</dmn.dir>
+    <dmn.cases.dir>${project.basedir}/src/test/resources/dmn-cases</dmn.cases.dir>
+    <dmn.files></dmn.files>
+    <dmn.remote></dmn.remote>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.camunda</groupId>
+      <artifactId>zeebe-dmn</artifactId>
+      <version>${camunda.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.msgpack</groupId>
+      <artifactId>jackson-dataformat-msgpack</artifactId>
+      <version>${msgpack.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <directory>${buildDir}</directory>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.15.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.6.1</version>
+        <configuration>
+          <!-- Agrona (used by zeebe-dmn) needs these on Java 25 -->
+          <argLine>
+            --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
+            --add-opens java.base/java.nio=ALL-UNNAMED
+            --sun-misc-unsafe-memory-access=allow
+          </argLine>
+          <systemPropertyVariables>
+            <dmn.dir>${dmn.dir}</dmn.dir>
+            <dmn.cases.dir>${dmn.cases.dir}</dmn.cases.dir>
+            <dmn.report.dir>${project.build.directory}/dmn-coverage</dmn.report.dir>
+            <dmn.files>${dmn.files}</dmn.files>
+            <dmn.remote>${dmn.remote}</dmn.remote>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

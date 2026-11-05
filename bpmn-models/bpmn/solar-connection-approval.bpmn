@@ -69,7 +69,7 @@
   timers: if demoMode = true
     then {fixReminder: &quot;PT2M&quot;, fixReply: &quot;PT5M&quot;, retryWait: &quot;PT10S&quot;, offerExpiry: &quot;PT5M&quot;, delivery: &quot;PT5M&quot;, inspectionOverdue: &quot;PT3M&quot;, deadlineWarn: &quot;PT20M&quot;, signature: &quot;PT5M&quot;}
     else {fixReminder: &quot;PT72H&quot;, fixReply: &quot;PT168H&quot;, retryWait: &quot;PT30S&quot;, offerExpiry: &quot;PT336H&quot;, delivery: &quot;PT1440H&quot;, inspectionOverdue: &quot;PT120H&quot;, deadlineWarn: &quot;PT432H&quot;, signature: &quot;PT336H&quot;},
-  config: {weatherUrl: &quot;https://api.open-meteo.com/v1/forecast&quot;, gridUrl: &quot;http://localhost:8091/grid&quot;, installerUrl: &quot;http://localhost:8091/installers&quot;, certUrl: &quot;http://localhost:8091/certificates&quot;, smtpHost: &quot;127.0.0.1&quot;, smtpPort: 1025, mailFrom: &quot;noreply@metrocitypower.test&quot;},
+  config: {weatherUrl: if useMockWeather = true then &quot;http://localhost:8091/weather/forecast&quot; else &quot;https://api.open-meteo.com/v1/forecast&quot;,gridUrl: &quot;http://localhost:8091/grid&quot;, installerUrl: &quot;http://localhost:8091/installers&quot;, certUrl: &quot;http://localhost:8091/certificates&quot;, smtpHost: &quot;127.0.0.1&quot;, smtpPort: 1025, mailFrom: &quot;noreply@metrocitypower.test&quot;},
   hasBattery: system.batteryKwh != null and system.batteryKwh &gt; 0
 }" resultVariable="setup" /><zeebe:ioMapping><zeebe:output source="=setup.timers" target="timers" /><zeebe:output source="=setup.config" target="config" /><zeebe:output source="=setup.hasBattery" target="hasBattery" /><zeebe:output source="=false" target="exportLimited" /></zeebe:ioMapping></bpmn:extensionElements>
       <bpmn:incoming>Flow_Start_Applied_Task_Setup</bpmn:incoming>
@@ -277,7 +277,7 @@ No size rule matches (bad or missing inverter size): a person classifies it inst
         <bpmn:outgoing>Flow_T_RetryMerge_T_Weather</bpmn:outgoing>
       </bpmn:exclusiveGateway>
       <bpmn:serviceTask id="T_Weather" name="Estimate solar (weather API)" zeebe:modelerTemplate="io.camunda.connectors.HttpJson.v2" zeebe:modelerTemplateVersion="13">
-        <bpmn:extensionElements><zeebe:taskDefinition type="io.camunda:http-json:1" retries="1" /><zeebe:ioMapping><zeebe:input source="noAuth" target="authentication.type" /><zeebe:input source="GET" target="method" /><zeebe:input source="=config.weatherUrl" target="url" /><zeebe:input source="={latitude: string(site.lat), longitude: string(site.lon), hourly: &quot;global_tilted_irradiance&quot;, tilt: &quot;20&quot;, forecast_days: &quot;1&quot;}" target="queryParameters" /><zeebe:input source="false" target="storeResponse" /><zeebe:input source="false" target="followRedirects" /><zeebe:input source="10" target="connectionTimeoutInSeconds" /><zeebe:input source="10" target="readTimeoutInSeconds" /></zeebe:ioMapping><zeebe:taskHeaders><zeebe:header key="elementTemplateVersion" value="13" /><zeebe:header key="elementTemplateId" value="io.camunda.connectors.HttpJson.v2" /><zeebe:header key="resultExpression" value="={solar: if response.body.hourly = null then null else {peakKw: max(response.body.hourly.global_tilted_irradiance) / 1000 * system.pvKw * 0.8, source: &quot;WEATHER_API&quot;}}" /><zeebe:header key="retryBackoff" value="PT0S" /><zeebe:header key="errorExpression" value="=if error != null then bpmnError(&quot;SOLAR_API_FAILED&quot;, error.message) else null" /></zeebe:taskHeaders></bpmn:extensionElements>
+        <bpmn:extensionElements><zeebe:taskDefinition type="io.camunda:http-json:1" retries="1" /><zeebe:ioMapping><zeebe:input source="noAuth" target="authentication.type" /><zeebe:input source="GET" target="method" /><zeebe:input source="=config.weatherUrl" target="url" /><zeebe:input source="={latitude: string(site.lat), longitude: string(site.lon), hourly: &quot;global_tilted_irradiance&quot;, tilt: &quot;20&quot;, forecast_days: &quot;1&quot;}" target="queryParameters" /><zeebe:input source="false" target="storeResponse" /><zeebe:input source="false" target="followRedirects" /><zeebe:input source="10" target="connectionTimeoutInSeconds" /><zeebe:input source="10" target="readTimeoutInSeconds" /><zeebe:output source="=if peakIrradiance = null then null else {peakKw: peakIrradiance / 1000 * system.pvKw * 0.8, source: &quot;WEATHER_API&quot;}" target="solar" /></zeebe:ioMapping><zeebe:taskHeaders><zeebe:header key="elementTemplateVersion" value="13" /><zeebe:header key="elementTemplateId" value="io.camunda.connectors.HttpJson.v2" /><zeebe:header key="resultExpression" value="={peakIrradiance: if response.body.hourly = null then null else max(response.body.hourly.global_tilted_irradiance)}" /><zeebe:header key="retryBackoff" value="PT0S" /><zeebe:header key="errorExpression" value="=if error != null then bpmnError(&quot;SOLAR_API_FAILED&quot;, error.message) else null" /></zeebe:taskHeaders></bpmn:extensionElements>
         <bpmn:incoming>Flow_T_RetryMerge_T_Weather</bpmn:incoming>
         <bpmn:outgoing>Flow_T_Weather_T_Plausible</bpmn:outgoing>
       </bpmn:serviceTask>
@@ -562,7 +562,7 @@ Battery fails the DMN check: engineer review.</bpmn:text></bpmn:textAnnotation>
         <bpmn:outgoing>Flow_U_LimitMerge_U_Limit</bpmn:outgoing>
       </bpmn:exclusiveGateway>
       <bpmn:serviceTask id="U_Limit" name="Set export limit (fallback)">
-        <bpmn:extensionElements><zeebe:taskDefinition type="export-limit" /><zeebe:ioMapping><zeebe:output source="=true" target="exportLimited" /></zeebe:ioMapping></bpmn:extensionElements>
+        <bpmn:extensionElements><zeebe:taskDefinition type="export-limit" /><zeebe:ioMapping><zeebe:output source="=true" target="exportLimited" /><zeebe:output source="=exportLimitKw" target="exportLimitKw" /></zeebe:ioMapping></bpmn:extensionElements>
         <bpmn:incoming>Flow_U_LimitMerge_U_Limit</bpmn:incoming>
         <bpmn:outgoing>Flow_U_Limit_U_EndLimited</bpmn:outgoing>
       </bpmn:serviceTask>
@@ -954,7 +954,7 @@ Metro City Power&quot;" target="data.smtpAction.body" /></zeebe:ioMapping><zeebe
     <bpmn:subProcess id="Esp_Deadline" name="Deadline warning" triggeredByEvent="true">
       <bpmn:startEvent id="L_Start" name="Day 18 of 20" isInterrupting="false">
         <bpmn:outgoing>Flow_L_Start_L_Review</bpmn:outgoing>
-        <bpmn:timerEventDefinition id="TimerEventDefinition_34"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">=timers.deadlineWarn</bpmn:timeDuration></bpmn:timerEventDefinition>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_34"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">=if demoMode = true then &quot;PT20M&quot; else &quot;PT432H&quot;</bpmn:timeDuration></bpmn:timerEventDefinition>
       </bpmn:startEvent>
       <bpmn:userTask id="L_Review" name="Supervisor reviews delay">
         <bpmn:extensionElements><zeebe:userTask /><zeebe:formDefinition formId="delay-review" bindingType="deployment" /><zeebe:assignmentDefinition candidateGroups="supervisors" /></bpmn:extensionElements>
