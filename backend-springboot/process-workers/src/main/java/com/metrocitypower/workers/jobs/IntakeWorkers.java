@@ -52,6 +52,22 @@ public class IntakeWorkers {
     return Map.of("validation", result.toVariable());
   }
 
+  /** One required document, checked inside the sequential multi-instance in "Classify". */
+  public record DocumentCheck(String document, String status, String checkedAt) {}
+
+  /**
+   * Sequential multi-instance over classification.requiredDocuments (element variable "document").
+   * The portal may send the list of uploaded document types as "documents"; without it every
+   * document counts as received (the demo has no file upload).
+   */
+  @JobWorker(type = "document-check", fetchVariables = {"applicationId", "document", "documents"})
+  public Map<String, Object> documentCheck(@Variable("applicationId") String applicationId,
+      @Variable("document") String document, @Variable(value = "documents", optional = true) java.util.List<String> documents) {
+    String status = documents == null || documents.contains(document) ? "RECEIVED" : "MISSING";
+    LOG.log(Level.INFO, String.format("[%s] document %s %s", applicationId, document, status));
+    return Map.of("documentCheck", new DocumentCheck(document, status, Instant.now().toString()));
+  }
+
   @JobWorker(type = "register-only", fetchVariables = {"applicationId"})
   public Map<String, Object> registerOnly(@Variable("applicationId") String applicationId) {
     String registrationId = "REG-" + applicationId;

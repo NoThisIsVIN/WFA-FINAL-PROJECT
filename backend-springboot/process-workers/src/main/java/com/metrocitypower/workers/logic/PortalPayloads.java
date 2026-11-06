@@ -9,7 +9,7 @@ import java.util.Set;
 public final class PortalPayloads {
 
   public static final Set<String> REQUEST_TYPES =
-      Set.of("FIX_REQUEST", "FIX_REMINDER", "COST_OFFER", "DEFECT_FIX");
+      Set.of("FIX_REQUEST", "FIX_REMINDER", "COST_OFFER", "DEFECT_FIX", "UPGRADE_DELAY");
 
   private PortalPayloads() {}
 
@@ -38,6 +38,11 @@ public final class PortalPayloads {
       case "DEFECT_FIX" -> {
         p.put("serialNumber", Vars.path(vars, "device.serialNumber"));
         p.put("notes", Vars.firstNonNull(Vars.path(vars, "inspectionResult.notes"), vars.get("inspectionNotes")));
+      }
+      case "UPGRADE_DELAY" -> {
+        p.put("orderId", Vars.path(vars, "upgrade.orderId"));
+        p.put("supplier", Vars.path(vars, "upgrade.supplier"));
+        p.put("etaDays", Vars.path(vars, "upgrade.etaDays"));
       }
       default -> throw new IllegalStateException();
     }

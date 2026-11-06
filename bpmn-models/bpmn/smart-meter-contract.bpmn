@@ -35,25 +35,25 @@
       <bpmn:extensionElements><zeebe:properties><zeebe:property name="inbound.type" value="io.camunda:webhook:1" /><zeebe:property name="inbound.method" value="post" /><zeebe:property name="inbound.context" value="mcp-esign-callback" /><zeebe:property name="inbound.shouldValidateHmac" value="enabled" /><zeebe:property name="inbound.hmacSecret" value="{{secrets.ESIGN_HMAC_SECRET}}" /><zeebe:property name="inbound.hmacHeader" value="X-Signature" /><zeebe:property name="inbound.hmacScopes" value="=[&quot;BODY&quot;]" /><zeebe:property name="inbound.hmacAlgorithm" value="sha_256" /><zeebe:property name="inbound.auth.type" value="NONE" /><zeebe:property name="activationCondition" value="=request.body.status = &quot;SIGNED&quot;" /><zeebe:property name="consumeUnmatchedEvents" value="false" /><zeebe:property name="synchronousResponse" value="false" /><zeebe:property name="correlationKeyExpression" value="=request.body.applicationId" /><zeebe:property name="messageIdExpression" value="=request.body.eventId" /><zeebe:property name="messageTtl" value="PT1H" /><zeebe:property name="deduplicationModeManualFlag" value="false" /><zeebe:property name="deduplicationMode" value="AUTO" /><zeebe:property name="resultExpression" value="={esignStatus: request.body.status, signedAt: request.body.signedAt}" /></zeebe:properties></bpmn:extensionElements>
       <bpmn:incoming>Flow_S_Wait_S_Signed</bpmn:incoming>
       <bpmn:outgoing>Flow_S_Signed_S_Join</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_49" messageRef="Msg_Signed" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_50" messageRef="Msg_Signed" />
     </bpmn:intermediateCatchEvent>
     <bpmn:intermediateCatchEvent id="S_Declined" name="Declined">
       <bpmn:incoming>Flow_S_Wait_S_Declined</bpmn:incoming>
       <bpmn:outgoing>Flow_S_Declined_S_EndDeclined</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_50" messageRef="Msg_Declined" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_51" messageRef="Msg_Declined" />
     </bpmn:intermediateCatchEvent>
     <bpmn:endEvent id="S_EndDeclined" name="Contract declined">
       <bpmn:incoming>Flow_S_Declined_S_EndDeclined</bpmn:incoming>
-      <bpmn:errorEventDefinition id="ErrorEventDefinition_51" errorRef="Error_Declined" />
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_52" errorRef="Error_Declined" />
     </bpmn:endEvent>
     <bpmn:intermediateCatchEvent id="S_Timeout" name="No signature">
       <bpmn:incoming>Flow_S_Wait_S_Timeout</bpmn:incoming>
       <bpmn:outgoing>Flow_S_Timeout_S_EndExpired</bpmn:outgoing>
-      <bpmn:timerEventDefinition id="TimerEventDefinition_52"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">=timers.signature</bpmn:timeDuration></bpmn:timerEventDefinition>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_53"><bpmn:timeDuration xsi:type="bpmn:tFormalExpression">=timers.signature</bpmn:timeDuration></bpmn:timerEventDefinition>
     </bpmn:intermediateCatchEvent>
     <bpmn:endEvent id="S_EndExpired" name="Contract expired">
       <bpmn:incoming>Flow_S_Timeout_S_EndExpired</bpmn:incoming>
-      <bpmn:errorEventDefinition id="ErrorEventDefinition_53" errorRef="Error_Expired" />
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_54" errorRef="Error_Expired" />
     </bpmn:endEvent>
     <bpmn:parallelGateway id="S_Join">
       <bpmn:incoming>Flow_S_Install_S_Join</bpmn:incoming>

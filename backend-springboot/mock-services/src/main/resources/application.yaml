@@ -12,3 +12,6 @@ mocks:
     webhook-url: ${ESIGN_WEBHOOK_URL:http://localhost:8086/inbound/mcp-esign-callback}
     # Demo default only; set ESIGN_HMAC_SECRET to the same value as the webhook connector.
     hmac-secret: ${ESIGN_HMAC_SECRET:demo-esign-secret}
+  # X-Api-Key required by the registry endpoints (installers, grid load, certificates).
+  # Empty = no check. The BPMN REST connectors send the Camunda secret MOCKS_API_KEY.
+  api-key: ${MOCKS_API_KEY:}
