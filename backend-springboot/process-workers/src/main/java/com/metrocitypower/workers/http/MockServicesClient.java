@@ -1,5 +1,8 @@
 package com.metrocitypower.workers.http;
 
+import com.metrocitypower.workers.model.Esign;
+import com.metrocitypower.workers.model.Meter;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -28,7 +31,7 @@ public class MockServicesClient {
   }
 
   /** 201 {orderId, supplier, etaDays}, or 409 {error:"SUPPLIER_OUT_OF_STOCK"}. */
-  public JsonHttp.Result orderTransformer(String applicationId, String substationId, Object option, String supplier) {
+  public JsonHttp.Result orderTransformer(String applicationId, String substationId, String option, String supplier) {
     return http.post("/supplier/orders",
         body("applicationId", applicationId, "substationId", substationId, "option", option, "supplier", supplier));
   }
@@ -59,14 +62,17 @@ public class MockServicesClient {
     return http.expectOk(http.post("/field/resume", Map.of()), "resume field work").body();
   }
 
-  public Map<String, Object> sendEnvelope(String applicationId, String email, Object tariffCode, Object ratePerKwhRs) {
+  /** 201 {envelopeId}. */
+  public Esign sendEnvelope(String applicationId, String email, String tariffCode, BigDecimal ratePerKwhRs) {
     return http.expectOk(http.post("/esign/envelopes", body("applicationId", applicationId, "email", email,
-        "tariffCode", tariffCode, "ratePerKwhRs", ratePerKwhRs)), "send e-sign envelope").body();
+        "tariffCode", tariffCode, "ratePerKwhRs", ratePerKwhRs)), "send e-sign envelope").bodyAs(Esign.class);
   }
 
-  public Map<String, Object> activateMeter(String meterId, String applicationId, Object tariffCode) {
+  /** 200 {meterId, activatedAt}. */
+  public Meter activateMeter(String meterId, String applicationId, String tariffCode) {
     return http.expectOk(http.post("/meters/" + enc(meterId) + "/activate",
-        body("applicationId", applicationId, "tariffCode", tariffCode)), "activate meter " + meterId).body();
+        body("applicationId", applicationId, "tariffCode", tariffCode)), "activate meter " + meterId)
+        .bodyAs(Meter.class);
   }
 
   /** Map with insertion order; null values are kept (Map.of rejects them). */

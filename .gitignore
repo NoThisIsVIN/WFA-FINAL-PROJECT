@@ -10,6 +10,7 @@ build/
 *.mv.db
 *.trace.db
 camunda-data/
+backend-springboot/**/data/
 
 # Secrets
 .env

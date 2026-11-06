@@ -1,5 +1,11 @@
 package com.metrocitypower.workers.logic;
 
+import com.metrocitypower.workers.model.Device;
+import com.metrocitypower.workers.model.InspectionResult;
+import com.metrocitypower.workers.model.OpsAlertInput;
+import com.metrocitypower.workers.model.PortalRequestInput;
+import com.metrocitypower.workers.model.Upgrade;
+import com.metrocitypower.workers.model.Validation;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,68 +19,68 @@ public final class PortalPayloads {
 
   private PortalPayloads() {}
 
+  /** Body of {@code POST /internal/inbox}. The payload differs per request type. */
+  public record InboxItem(String applicationId, String requestType, Map<String, Object> payload, String createdAt) {}
+
+  /** Body of {@code POST /internal/ops-alerts}. */
+  public record OpsAlert(String applicationId, long processInstanceKey, Object errorCode, Object errorMessage,
+      String at) {}
+
   /**
    * Payload per request type. The BPMN user tasks map their form fields into objects, so values
    * are read from there first ({@code upgrade.option}, {@code inspectionResult.notes}) and from the
-   * flat form keys as a fallback.
+   * flat form keys as a fallback. Null values are kept, so the portal always sees every key.
    */
-  public static Map<String, Object> payload(String requestType, Map<String, ?> vars) {
+  public static Map<String, Object> payload(String requestType, PortalRequestInput in) {
     if (requestType == null || !REQUEST_TYPES.contains(requestType)) {
       throw new IllegalArgumentException("Unknown requestType header: " + requestType);
     }
+    Validation validation = in.validation();
+    Upgrade upgrade = in.upgrade() == null ? new Upgrade(null, null, null, null, null, null) : in.upgrade();
+    Device device = in.device();
+    InspectionResult inspection = in.inspectionResult();
+
     Map<String, Object> p = new LinkedHashMap<>();
     switch (requestType) {
       case "FIX_REQUEST", "FIX_REMINDER" -> {
-        Object missing = Vars.path(vars, "validation.missing");
-        p.put("missing", missing instanceof List<?> l ? l : List.of());
-        p.put("fixRound", vars.get("fixRound"));
+        List<String> missing = validation == null ? null : validation.missing();
+        p.put("missing", missing == null ? List.of() : missing);
+        p.put("fixRound", in.fixRound());
       }
       case "COST_OFFER" -> {
-        p.put("upgradeOption", Vars.firstNonNull(Vars.path(vars, "upgrade.option"), vars.get("upgradeOption")));
-        p.put("upgradeCostRs", Vars.firstNonNull(Vars.path(vars, "upgrade.costRs"), vars.get("upgradeCostRs")));
-        p.put("applicantShareRs",
-            Vars.firstNonNull(Vars.path(vars, "upgrade.applicantShareRs"), vars.get("applicantShareRs")));
+        p.put("upgradeOption", Vars.firstNonNull(upgrade.option(), in.upgradeOption()));
+        p.put("upgradeCostRs", Vars.firstNonNull(upgrade.costRs(), in.upgradeCostRs()));
+        p.put("applicantShareRs", Vars.firstNonNull(upgrade.applicantShareRs(), in.applicantShareRs()));
       }
       case "DEFECT_FIX" -> {
-        p.put("serialNumber", Vars.path(vars, "device.serialNumber"));
-        p.put("notes", Vars.firstNonNull(Vars.path(vars, "inspectionResult.notes"), vars.get("inspectionNotes")));
+        p.put("serialNumber", device == null ? null : device.serialNumber());
+        p.put("notes", Vars.firstNonNull(inspection == null ? null : inspection.notes(), in.inspectionNotes()));
       }
       case "UPGRADE_DELAY" -> {
-        p.put("orderId", Vars.path(vars, "upgrade.orderId"));
-        p.put("supplier", Vars.path(vars, "upgrade.supplier"));
-        p.put("etaDays", Vars.path(vars, "upgrade.etaDays"));
+        p.put("orderId", upgrade.orderId());
+        p.put("supplier", upgrade.supplier());
+        p.put("etaDays", upgrade.etaDays());
       }
       default -> throw new IllegalStateException();
     }
     return p;
   }
 
-  public static Map<String, Object> inboxItem(String applicationId, String requestType,
-      Map<String, Object> payload, String createdAt) {
-    Map<String, Object> body = new LinkedHashMap<>();
-    body.put("applicationId", applicationId);
-    body.put("requestType", requestType);
-    body.put("payload", payload);
-    body.put("createdAt", createdAt);
-    return body;
+  public static InboxItem inboxItem(String applicationId, String requestType, Map<String, Object> payload,
+      String createdAt) {
+    return new InboxItem(applicationId, requestType, payload, createdAt);
   }
 
-  /** Ops alert body. {@code errorCode}/{@code errorMessage} fall back to fields of an {@code error} object. */
-  public static Map<String, Object> opsAlert(Map<String, ?> vars, long processInstanceKey, String at) {
-    Map<String, Object> error = Vars.map(vars.get("error"));
-    Object code = Vars.firstNonNull(vars.get("errorCode"),
+  /** {@code errorCode}/{@code errorMessage} fall back to fields of an {@code error} object, or to an error string. */
+  public static OpsAlert opsAlert(OpsAlertInput in, long processInstanceKey, String at) {
+    Map<?, ?> error = in.error() instanceof Map<?, ?> m ? m : null;
+    Object code = Vars.firstNonNull(in.errorCode(),
         error == null ? null : Vars.firstNonNull(error.get("errorCode"), error.get("code")));
-    Object message = Vars.firstNonNull(vars.get("errorMessage"),
+    Object message = Vars.firstNonNull(in.errorMessage(),
         error == null ? null : Vars.firstNonNull(error.get("errorMessage"), error.get("message")));
-    if (message == null && vars.get("error") instanceof String s) {
+    if (message == null && in.error() instanceof String s) {
       message = s;
     }
-    Map<String, Object> body = new LinkedHashMap<>();
-    body.put("applicationId", vars.get("applicationId"));
-    body.put("processInstanceKey", processInstanceKey);
-    body.put("errorCode", code);
-    body.put("errorMessage", message);
-    body.put("at", at);
-    return body;
+    return new OpsAlert(in.applicationId(), processInstanceKey, code, message, at);
   }
 }

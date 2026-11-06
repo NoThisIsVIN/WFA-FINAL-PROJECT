@@ -3,7 +3,7 @@ package com.metrocitypower.portal.web;
 import com.metrocitypower.portal.mocks.MocksClient;
 import com.metrocitypower.portal.service.ApplicationService;
 import com.metrocitypower.portal.service.OpsService;
-import com.metrocitypower.portal.store.AlertStore;
+import com.metrocitypower.portal.service.AlertService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,10 +22,10 @@ public class OpsController {
 
     private final OpsService ops;
     private final ApplicationService applications;
-    private final AlertStore alerts;
+    private final AlertService alerts;
     private final MocksClient mocks;
 
-    public OpsController(OpsService ops, ApplicationService applications, AlertStore alerts, MocksClient mocks) {
+    public OpsController(OpsService ops, ApplicationService applications, AlertService alerts, MocksClient mocks) {
         this.ops = ops;
         this.applications = applications;
         this.alerts = alerts;

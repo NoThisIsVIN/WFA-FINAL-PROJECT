@@ -2,8 +2,7 @@ package com.metrocitypower.portal.service;
 
 import com.metrocitypower.portal.camunda.CamundaException;
 import com.metrocitypower.portal.camunda.CamundaGateway;
-import com.metrocitypower.portal.store.AlertStore;
-import com.metrocitypower.portal.store.ApplicationStore;
+import com.metrocitypower.portal.persistence.CaseEventType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,32 +22,37 @@ public class OpsService {
     public static final String SIGNAL_LIFTED = "grid-emergency-lifted";
 
     private final CamundaGateway camunda;
-    private final AlertStore alerts;
-    private final ApplicationStore applications;
+    private final AlertService alerts;
+    private final ApplicationRecordService applications;
+    private final CaseEventService events;
 
-    public OpsService(CamundaGateway camunda, AlertStore alerts, ApplicationStore applications) {
+    public OpsService(CamundaGateway camunda, AlertService alerts, ApplicationRecordService applications,
+                      CaseEventService events) {
         this.camunda = camunda;
         this.alerts = alerts;
         this.applications = applications;
+        this.events = events;
     }
 
     public Map<String, Object> emergency(Map<String, Object> body) {
         Object reason = body == null ? null : body.get("reason");
         String emergencyReason = reason == null || reason.toString().isBlank() ? "Grid emergency" : reason.toString();
         camunda.broadcastSignal(SIGNAL_EMERGENCY, Map.of("emergencyReason", emergencyReason));
+        events.record(null, CaseEventType.EMERGENCY, emergencyReason);
         log.info("[OPS] signal {} broadcast: {}", SIGNAL_EMERGENCY, emergencyReason);
         return Map.of("signal", SIGNAL_EMERGENCY, "reason", emergencyReason);
     }
 
     public Map<String, Object> lift() {
         camunda.broadcastSignal(SIGNAL_LIFTED, Map.of());
+        events.record(null, CaseEventType.EMERGENCY_LIFTED, null);
         log.info("[OPS] signal {} broadcast", SIGNAL_LIFTED);
         return Map.of("signal", SIGNAL_LIFTED);
     }
 
     public Map<String, Object> summary() {
         Map<String, Object> out = new LinkedHashMap<>();
-        out.put("knownApplications", applications.all().size());
+        out.put("knownApplications", applications.count());
         out.put("alerts", alerts.count());
         try {
             out.put("activeCases", camunda.countProcessInstances(CamundaGateway.MAIN_PROCESS, "ACTIVE"));

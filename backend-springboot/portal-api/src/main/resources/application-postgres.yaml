@@ -1,0 +1,12 @@
+# Activate with --spring.profiles.active=postgres (or SPRING_PROFILES_ACTIVE=postgres)
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/solar}
+    username: ${DB_USER:solar}
+    password: ${DB_PASSWORD:solar}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  h2:
+    console:
+      enabled: false

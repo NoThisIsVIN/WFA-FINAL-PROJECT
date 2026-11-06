@@ -1,7 +1,7 @@
 package com.metrocitypower.portal.web;
 
 import com.metrocitypower.portal.service.ApplicationService;
-import com.metrocitypower.portal.store.InboxStore;
+import com.metrocitypower.portal.service.InboxItem;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,7 +41,7 @@ public class ApplicantController {
     }
 
     @GetMapping("/{id}/inbox")
-    public List<InboxStore.InboxItem> inbox(@PathVariable String id) {
+    public List<InboxItem> inbox(@PathVariable String id) {
         return service.inbox(id);
     }
 

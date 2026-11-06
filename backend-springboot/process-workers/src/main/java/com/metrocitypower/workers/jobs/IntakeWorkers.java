@@ -2,19 +2,22 @@ package com.metrocitypower.workers.jobs;
 
 import com.metrocitypower.workers.logic.ApplicationValidator;
 import com.metrocitypower.workers.logic.Vars;
+import com.metrocitypower.workers.model.Application;
+import com.metrocitypower.workers.model.DocumentCheck;
+import com.metrocitypower.workers.model.Registration;
+import com.metrocitypower.workers.model.Validation;
 import io.camunda.client.annotation.JobWorker;
 import io.camunda.client.annotation.Variable;
+import io.camunda.client.annotation.VariablesAsType;
 import io.camunda.client.api.response.ActivatedJob;
-import io.camunda.client.exception.CamundaError;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
 
-/** Intake: validation + duplicate check, and the MICRO fast path. */
+/** Intake: validation + duplicate check, the required-document loop and the MICRO fast path. */
 @Component
 public class IntakeWorkers {
 
@@ -26,34 +29,40 @@ public class IntakeWorkers {
     this.duplicates = duplicates;
   }
 
+  public record ValidateResult(Validation validation) {}
+
+  /** Variables set on the boundary event's scope with DUPLICATE_APPLICATION. */
+  public record DuplicateErrorVariables(String duplicateOf) {}
+
+  public record DocumentCheckResult(DocumentCheck documentCheck) {}
+
+  public record RegisterResult(Registration registration) {}
+
+  /** ActivatedJob is only used for the own process instance key (excluded from the duplicate search). */
   @JobWorker(type = "application-validate",
       fetchVariables = {"applicationId", "applicant", "site", "system", "devices", "installer"})
-  public Map<String, Object> validate(ActivatedJob job) {
-    Map<String, Object> vars = job.getVariablesAsMap();
-    String applicationId = Vars.str(vars.get("applicationId"));
-    ApplicationValidator.Result result = ApplicationValidator.validate(vars);
+  public ValidateResult validate(@VariablesAsType Application app, ActivatedJob job) {
+    String applicationId = app.applicationId();
+    Validation validation = ApplicationValidator.validate(app);
 
-    String meterId = Vars.str(Vars.path(vars, "site.meterId"));
+    String meterId = app.site() == null ? null : Vars.str(app.site().meterId());
     if (meterId != null) {
       Optional<DuplicateFinder.Duplicate> dup = duplicates.find(meterId, job.getProcessInstanceKey());
       if (dup.isPresent()) {
         String other = dup.get().applicationId();
         LOG.log(Level.INFO, String.format("[%s] duplicate of %s (meter %s, instance %d)",
             applicationId, other, meterId, dup.get().processInstanceKey()));
-        Map<String, Object> errVars = new HashMap<>();
-        errVars.put("duplicateOf", other);
-        throw CamundaError.bpmnError("DUPLICATE_APPLICATION",
-            "Meter " + meterId + " already has an active application " + other, errVars);
+        throw BusinessErrors.bpmnError(BusinessErrors.DUPLICATE_APPLICATION,
+            "Meter " + meterId + " already has an active application " + other,
+            new DuplicateErrorVariables(other));
       }
     }
 
     LOG.log(Level.INFO, String.format("[%s] validation %s%s", applicationId,
-        result.complete() ? "complete" : "incomplete", result.complete() ? "" : ", missing " + result.missing()));
-    return Map.of("validation", result.toVariable());
+        validation.complete() ? "complete" : "incomplete",
+        validation.complete() ? "" : ", missing " + validation.missing()));
+    return new ValidateResult(validation);
   }
-
-  /** One required document, checked inside the sequential multi-instance in "Classify". */
-  public record DocumentCheck(String document, String status, String checkedAt) {}
 
   /**
    * Sequential multi-instance over classification.requiredDocuments (element variable "document").
@@ -61,18 +70,19 @@ public class IntakeWorkers {
    * document counts as received (the demo has no file upload).
    */
   @JobWorker(type = "document-check", fetchVariables = {"applicationId", "document", "documents"})
-  public Map<String, Object> documentCheck(@Variable("applicationId") String applicationId,
-      @Variable("document") String document, @Variable(value = "documents", optional = true) java.util.List<String> documents) {
-    String status = documents == null || documents.contains(document) ? "RECEIVED" : "MISSING";
-    LOG.log(Level.INFO, String.format("[%s] document %s %s", applicationId, document, status));
-    return Map.of("documentCheck", new DocumentCheck(document, status, Instant.now().toString()));
+  public DocumentCheckResult documentCheck(@VariablesAsType DocumentCheckInput in) {
+    String status = in.documents() == null || in.documents().contains(in.document()) ? "RECEIVED" : "MISSING";
+    LOG.log(Level.INFO, String.format("[%s] document %s %s", in.applicationId(), in.document(), status));
+    return new DocumentCheckResult(new DocumentCheck(in.document(), status, Instant.now().toString()));
   }
 
+  /** Inputs of document-check; {@code documents} is a list, so it is read as a whole record. */
+  public record DocumentCheckInput(String applicationId, String document, List<String> documents) {}
+
   @JobWorker(type = "register-only", fetchVariables = {"applicationId"})
-  public Map<String, Object> registerOnly(@Variable("applicationId") String applicationId) {
+  public RegisterResult registerOnly(@Variable String applicationId) {
     String registrationId = "REG-" + applicationId;
     LOG.log(Level.INFO, String.format("[%s] registered (fast path) as %s", applicationId, registrationId));
-    return Map.of("registration",
-        Map.of("registrationId", registrationId, "registeredAt", Instant.now().toString()));
+    return new RegisterResult(new Registration(registrationId, Instant.now().toString()));
   }
 }

@@ -3,85 +3,106 @@ package com.metrocitypower.workers.logic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.HashMap;
+import com.metrocitypower.workers.model.OpsAlertInput;
+import com.metrocitypower.workers.model.PortalRequestInput;
+import io.camunda.client.impl.CamundaObjectMapper;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class PortalPayloadsTest {
 
+  private static final CamundaObjectMapper JSON = new CamundaObjectMapper();
+
+  private static PortalRequestInput input(String json) {
+    return JSON.fromJson(json, PortalRequestInput.class);
+  }
+
   @Test
   void fixRequestCarriesMissingFieldsAndRound() {
-    Map<String, Object> vars = Map.of(
-        "validation", Map.of("complete", false, "missing", List.of("site.lat", "installer.licenseNo")),
-        "fixRound", 1);
-    assertThat(PortalPayloads.payload("FIX_REQUEST", vars))
+    PortalRequestInput in = input(
+        "{\"validation\": {\"complete\": false, \"missing\": [\"site.lat\", \"installer.licenseNo\"]}, \"fixRound\": 1}");
+    assertThat(PortalPayloads.payload("FIX_REQUEST", in))
         .containsEntry("missing", List.of("site.lat", "installer.licenseNo"))
         .containsEntry("fixRound", 1);
-    assertThat(PortalPayloads.payload("FIX_REMINDER", Map.of()))
+    assertThat(PortalPayloads.payload("FIX_REMINDER", input("{}")))
         .containsEntry("missing", List.of())
         .containsEntry("fixRound", null);
   }
 
   @Test
   void costOfferReadsTheUpgradeObjectFirst() {
-    Map<String, Object> vars = Map.of(
-        "upgrade", Map.of("option", "NEW_TRANSFORMER", "costRs", 250000, "applicantShareRs", 50000),
-        "upgradeOption", "REINFORCE_FEEDER");
-    assertThat(PortalPayloads.payload("COST_OFFER", vars))
+    PortalRequestInput in = input("{\"upgrade\": {\"option\": \"NEW_TRANSFORMER\", \"costRs\": 250000,"
+        + " \"applicantShareRs\": 50000}, \"upgradeOption\": \"REINFORCE_FEEDER\"}");
+    Map<String, Object> p = PortalPayloads.payload("COST_OFFER", in);
+    assertThat(p)
         .containsEntry("upgradeOption", "NEW_TRANSFORMER")
-        .containsEntry("upgradeCostRs", 250000)
-        .containsEntry("applicantShareRs", 50000);
+        .containsEntry("upgradeCostRs", new BigDecimal("250000"))
+        .containsEntry("applicantShareRs", new BigDecimal("50000"));
+    // Posted to the portal exactly as the engineer entered it (no ".0").
+    assertThat(JSON.toJson(p)).contains("\"upgradeCostRs\":250000");
   }
 
   @Test
   void costOfferFallsBackToFlatFormKeys() {
-    Map<String, Object> vars = Map.of("upgradeOption", "REINFORCE_FEEDER", "upgradeCostRs", 90000,
-        "applicantShareRs", 10000);
-    assertThat(PortalPayloads.payload("COST_OFFER", vars))
+    PortalRequestInput in = input(
+        "{\"upgradeOption\": \"REINFORCE_FEEDER\", \"upgradeCostRs\": 90000, \"applicantShareRs\": 10000}");
+    assertThat(PortalPayloads.payload("COST_OFFER", in))
         .containsEntry("upgradeOption", "REINFORCE_FEEDER")
-        .containsEntry("upgradeCostRs", 90000)
-        .containsEntry("applicantShareRs", 10000);
+        .containsEntry("upgradeCostRs", new BigDecimal("90000"))
+        .containsEntry("applicantShareRs", new BigDecimal("10000"));
   }
 
   @Test
   void defectFixUsesDeviceAndInspectionNotes() {
-    Map<String, Object> vars = Map.of(
-        "device", Map.of("serialNumber", "INV-001", "type", "INVERTER"),
-        "inspectionResult", Map.of("outcome", "MINOR", "notes", "loose earth clamp"));
-    assertThat(PortalPayloads.payload("DEFECT_FIX", vars))
+    PortalRequestInput in = input("{\"device\": {\"serialNumber\": \"INV-001\", \"type\": \"INVERTER\"},"
+        + " \"inspectionResult\": {\"outcome\": \"MINOR\", \"notes\": \"loose earth clamp\"}}");
+    assertThat(PortalPayloads.payload("DEFECT_FIX", in))
         .containsEntry("serialNumber", "INV-001")
         .containsEntry("notes", "loose earth clamp");
-    assertThat(PortalPayloads.payload("DEFECT_FIX", Map.of("inspectionNotes", "flat note")))
+    assertThat(PortalPayloads.payload("DEFECT_FIX", input("{\"inspectionNotes\": \"flat note\"}")))
         .containsEntry("notes", "flat note");
   }
 
   @Test
+  void upgradeDelayCarriesTheOrder() {
+    PortalRequestInput in = input("{\"upgrade\": {\"option\": \"NEW_TRANSFORMER\", \"orderId\": \"ORD-1\","
+        + " \"supplier\": \"PRIMARY\", \"etaDays\": 21}}");
+    assertThat(PortalPayloads.payload("UPGRADE_DELAY", in))
+        .containsEntry("orderId", "ORD-1")
+        .containsEntry("supplier", "PRIMARY")
+        .containsEntry("etaDays", 21);
+  }
+
+  @Test
   void unknownRequestTypeIsRejected() {
-    assertThatThrownBy(() -> PortalPayloads.payload("HELLO", Map.of())).isInstanceOf(IllegalArgumentException.class);
-    assertThatThrownBy(() -> PortalPayloads.payload(null, Map.of())).isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> PortalPayloads.payload("HELLO", input("{}"))).isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> PortalPayloads.payload(null, input("{}"))).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void inboxItemShape() {
-    Map<String, Object> item = PortalPayloads.inboxItem("APP-2026-0001", "COST_OFFER", Map.of("a", 1), "2026-11-05T10:00:00Z");
-    assertThat(item).containsOnlyKeys("applicationId", "requestType", "payload", "createdAt");
+    PortalPayloads.InboxItem item =
+        PortalPayloads.inboxItem("APP-2026-0001", "COST_OFFER", Map.of("a", 1), "2026-11-05T10:00:00Z");
+    assertThat(JSON.fromJsonAsMap(JSON.toJson(item)))
+        .containsOnlyKeys("applicationId", "requestType", "payload", "createdAt");
   }
 
   @Test
   void opsAlertTakesFlatErrorFieldsOrErrorObject() {
-    Map<String, Object> flat = new HashMap<>(Map.of("applicationId", "APP-2026-0001", "errorCode", "X", "errorMessage", "boom"));
-    assertThat(PortalPayloads.opsAlert(flat, 42L, "now"))
-        .containsEntry("applicationId", "APP-2026-0001")
-        .containsEntry("processInstanceKey", 42L)
-        .containsEntry("errorCode", "X")
-        .containsEntry("errorMessage", "boom")
-        .containsEntry("at", "now");
+    OpsAlertInput flat = JSON.fromJson(
+        "{\"applicationId\": \"APP-2026-0001\", \"errorCode\": \"X\", \"errorMessage\": \"boom\"}", OpsAlertInput.class);
+    PortalPayloads.OpsAlert a = PortalPayloads.opsAlert(flat, 42L, "now");
+    assertThat(a).isEqualTo(new PortalPayloads.OpsAlert("APP-2026-0001", 42L, "X", "boom", "now"));
 
-    Map<String, Object> nested = Map.of("error", Map.of("code", "Y", "message", "bad"));
+    OpsAlertInput nested = JSON.fromJson("{\"error\": {\"code\": \"Y\", \"message\": \"bad\"}}", OpsAlertInput.class);
     assertThat(PortalPayloads.opsAlert(nested, 1L, "now"))
-        .containsEntry("errorCode", "Y")
-        .containsEntry("errorMessage", "bad")
-        .containsEntry("applicationId", null);
+        .isEqualTo(new PortalPayloads.OpsAlert(null, 1L, "Y", "bad", "now"));
+
+    OpsAlertInput text = JSON.fromJson("{\"error\": \"plain failure\"}", OpsAlertInput.class);
+    assertThat(PortalPayloads.opsAlert(text, 1L, "now").errorMessage()).isEqualTo("plain failure");
+    assertThat(JSON.fromJsonAsMap(JSON.toJson(a)))
+        .containsOnlyKeys("applicationId", "processInstanceKey", "errorCode", "errorMessage", "at");
   }
 }

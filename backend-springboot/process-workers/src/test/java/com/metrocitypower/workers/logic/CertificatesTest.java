@@ -2,17 +2,19 @@ package com.metrocitypower.workers.logic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.LinkedHashMap;
+import com.metrocitypower.workers.model.Device;
+import com.metrocitypower.workers.model.SolarSystem;
+import io.camunda.client.impl.CamundaObjectMapper;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class CertificatesTest {
 
-  private static final Map<String, Object> SYSTEM = Map.of("pvKw", 6.5, "inverterKw", 5, "batteryKwh", 10, "batteryKw", 4);
-  private static final List<Object> DEVICES = List.of(
-      Map.of("serialNumber", "INV-001", "type", "INVERTER"),
-      Map.of("serialNumber", "BAT-001", "type", "BATTERY"));
+  private static final CamundaObjectMapper JSON = new CamundaObjectMapper();
+  private static final SolarSystem SYSTEM = new SolarSystem(6.5, 5.0, 10.0, 4.0);
+  private static final List<Device> DEVICES = List.of(
+      new Device("INV-001", "INVERTER", null, null),
+      new Device("BAT-001", "BATTERY", null, null));
 
   @Test
   void idHasUtilityPrefix() {
@@ -26,16 +28,22 @@ class CertificatesTest {
   }
 
   @Test
-  void hashIsSha256HexAndStableAcrossNumberTypes() {
+  void unsetSizesAreLeftOut() {
+    assertThat(Certificates.hashInput("A", new SolarSystem(6.5, 5.0, 0.0, null), List.of()))
+        .isEqualTo("A|batteryKwh=0,inverterKw=5,pvKw=6.5|");
+  }
+
+  @Test
+  void hashIsSha256HexAndStableAcrossNumberForms() {
     String h = Certificates.hash("APP-2026-0001", SYSTEM, DEVICES);
     assertThat(h).hasSize(64).matches("[0-9a-f]+");
 
-    Map<String, Object> sameButDoubles = new LinkedHashMap<>();
-    sameButDoubles.put("inverterKw", 5.0);
-    sameButDoubles.put("pvKw", 6.50);
-    sameButDoubles.put("batteryKw", 4.0);
-    sameButDoubles.put("batteryKwh", 10.0);
-    assertThat(Certificates.hash("APP-2026-0001", sameButDoubles, DEVICES)).isEqualTo(h);
+    SolarSystem fromInts = JSON.fromJson("{\"pvKw\": 6.5, \"inverterKw\": 5, \"batteryKwh\": 10, \"batteryKw\": 4}",
+        SolarSystem.class);
+    SolarSystem fromDoubles = JSON.fromJson(
+        "{\"pvKw\": 6.50, \"inverterKw\": 5.0, \"batteryKwh\": 10.0, \"batteryKw\": 4.0}", SolarSystem.class);
+    assertThat(Certificates.hash("APP-2026-0001", fromInts, DEVICES)).isEqualTo(h);
+    assertThat(Certificates.hash("APP-2026-0001", fromDoubles, DEVICES)).isEqualTo(h);
     assertThat(Certificates.hash("APP-2026-0002", SYSTEM, DEVICES)).isNotEqualTo(h);
   }
 

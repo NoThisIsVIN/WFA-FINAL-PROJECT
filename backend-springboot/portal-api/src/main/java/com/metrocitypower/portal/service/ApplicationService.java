@@ -3,9 +3,8 @@ package com.metrocitypower.portal.service;
 import com.metrocitypower.portal.camunda.CamundaException;
 import com.metrocitypower.portal.camunda.CamundaGateway;
 import com.metrocitypower.portal.mocks.MocksClient;
-import com.metrocitypower.portal.store.ApplicationRecord;
-import com.metrocitypower.portal.store.ApplicationStore;
-import com.metrocitypower.portal.store.InboxStore;
+import com.metrocitypower.portal.persistence.CaseEventType;
+import com.metrocitypower.portal.service.ApplicationRecordService.ApplicationView;
 import com.metrocitypower.portal.web.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,18 +43,21 @@ public class ApplicationService {
 
     private final CamundaGateway camunda;
     private final MocksClient mocks;
-    private final ApplicationStore applications;
-    private final InboxStore inbox;
+    private final ApplicationRecordService applications;
+    private final InboxService inbox;
+    private final CaseEventService events;
     private final long submitTtlMs;
     private final long messageTtlMs;
 
-    public ApplicationService(CamundaGateway camunda, MocksClient mocks, ApplicationStore applications, InboxStore inbox,
+    public ApplicationService(CamundaGateway camunda, MocksClient mocks, ApplicationRecordService applications,
+                              InboxService inbox, CaseEventService events,
                               @Value("${portal.submit-ttl-ms:3600000}") long submitTtlMs,
                               @Value("${portal.message-ttl-ms:60000}") long messageTtlMs) {
         this.camunda = camunda;
         this.mocks = mocks;
         this.applications = applications;
         this.inbox = inbox;
+        this.events = events;
         this.submitTtlMs = submitTtlMs;
         this.messageTtlMs = messageTtlMs;
     }
@@ -76,22 +78,19 @@ public class ApplicationService {
         variables.putIfAbsent("demoMode", Boolean.TRUE);
         variables.put("useMockWeather", Boolean.TRUE.equals(body.get("useMockWeather")));
 
-        ApplicationStore.Registration reg = applications.register(submissionId, variables);
-        ApplicationRecord record = reg.record();
-        String applicationId = record.applicationId();
+        ApplicationRecordService.Registration reg = applications.register(submissionId, variables);
+        String applicationId = reg.application().applicationId();
 
-        synchronized (record) {
-            if (!record.published()) {
-                Map<String, Object> start = record.variables();
-                start.put("applicationId", applicationId);
-                start.put("meterId", meterIdOf(start.get("site")));
-                boolean fresh = camunda.publishMessage(MSG_SUBMITTED, "", submissionId, submitTtlMs, start);
-                record.markPublished();
-                log.info("[{}] application submitted (submissionId={}, meterId={}{})", applicationId, submissionId,
-                        start.get("meterId"), fresh ? "" : ", already buffered in Camunda");
-            } else {
-                log.info("[{}] duplicate submission ignored (submissionId={})", applicationId, submissionId);
-            }
+        // the row lock inside publishOnce makes parallel retries publish only once; a failed publish is retried
+        boolean publishedNow = applications.publishOnce(applicationId, start -> {
+            start.put("applicationId", applicationId);
+            start.put("meterId", meterIdOf(start.get("site")));
+            boolean fresh = camunda.publishMessage(MSG_SUBMITTED, "", submissionId, submitTtlMs, start);
+            log.info("[{}] application submitted (submissionId={}, meterId={}{})", applicationId, submissionId,
+                    start.get("meterId"), fresh ? "" : ", already buffered in Camunda");
+        });
+        if (!publishedNow) {
+            log.info("[{}] duplicate submission ignored (submissionId={})", applicationId, submissionId);
         }
         return new SubmitResult(applicationId, reg.duplicate());
     }
@@ -100,24 +99,22 @@ public class ApplicationService {
 
     public Map<String, Object> fix(String applicationId, Map<String, Object> body) {
         Map<String, Object> vars = new LinkedHashMap<>();
-        Optional<ApplicationRecord> record = applications.find(applicationId);
+        Map<String, Object> stored = applications.find(applicationId).map(ApplicationView::variables).orElse(Map.of());
         for (String part : FIX_PARTS) {
             if (body != null && body.containsKey(part)) {
-                Object value = body.get(part);
-                Object stored = record.map(r -> r.variables().get(part)).orElse(null);
-                Object merged = merge(stored, value);
-                vars.put(part, merged);
-                record.ifPresent(r -> r.putVariable(part, merged));
+                vars.put(part, merge(stored.get(part), body.get(part)));
             }
         }
         if (vars.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "NOTHING_TO_FIX",
                     "Send at least one of " + String.join(", ", FIX_PARTS));
         }
+        applications.updateVariables(applicationId, vars);
         if (vars.containsKey("site")) {
             vars.put("meterId", meterIdOf(vars.get("site")));
         }
         boolean published = camunda.publishMessage(MSG_FIX, applicationId, null, messageTtlMs, vars);
+        events.record(applicationId, CaseEventType.FIX_SUBMITTED, "parts=" + vars.keySet());
         int answered = inbox.answer(applicationId, i -> i.requestType() != null && i.requestType().startsWith("FIX_"));
         log.info("[{}] fix submitted ({}), {} inbox item(s) answered", applicationId, vars.keySet(), answered);
         return result(applicationId, MSG_FIX, applicationId, published);
@@ -128,6 +125,7 @@ public class ApplicationService {
         String withdrawReason = reason == null || reason.toString().isBlank() ? "Withdrawn by applicant" : reason.toString();
         boolean published = camunda.publishMessage(MSG_WITHDRAWN, applicationId, applicationId + ":withdraw",
                 messageTtlMs, Map.of("withdrawReason", withdrawReason));
+        events.record(applicationId, CaseEventType.WITHDRAWN, withdrawReason);
         inbox.answer(applicationId, i -> true);
         log.info("[{}] withdrawal requested: {}", applicationId, withdrawReason);
         return result(applicationId, MSG_WITHDRAWN, applicationId, published);
@@ -141,6 +139,7 @@ public class ApplicationService {
         String name = accepted ? MSG_OFFER_ACCEPTED : MSG_OFFER_DECLINED;
         boolean published = camunda.publishMessage(name, applicationId, applicationId + ":" + name, messageTtlMs,
                 Map.of("offerAccepted", accepted));
+        events.record(applicationId, accepted ? CaseEventType.OFFER_ACCEPTED : CaseEventType.OFFER_DECLINED, null);
         inbox.answer(applicationId, i -> "COST_OFFER".equals(i.requestType()));
         log.info("[{}] cost offer {}", applicationId, accepted ? "accepted" : "declined");
         return result(applicationId, name, applicationId, published);
@@ -149,6 +148,7 @@ public class ApplicationService {
     public Map<String, Object> defectFixed(String applicationId, String serialNumber) {
         String key = applicationId + ":" + serialNumber;
         boolean published = camunda.publishMessage(MSG_DEFECT_FIXED, key, null, messageTtlMs, Map.of());
+        events.record(applicationId, CaseEventType.DEFECT_FIXED, "serialNumber=" + serialNumber);
         inbox.answer(applicationId, i -> "DEFECT_FIX".equals(i.requestType())
                 && Objects.equals(serialNumber, String.valueOf(i.payload().get("serialNumber"))));
         log.info("[{}] defect fixed on device {}", applicationId, serialNumber);
@@ -157,6 +157,7 @@ public class ApplicationService {
 
     public Map<String, Object> signContract(String applicationId) {
         Map<String, Object> mock = mocks.signContract(applicationId);
+        events.record(applicationId, CaseEventType.CONTRACT_SIGNED, "webhookStatus=" + mock.get("webhookStatus"));
         log.info("[{}] contract signed via e-sign mock (webhookStatus={})", applicationId, mock.get("webhookStatus"));
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("applicationId", applicationId);
@@ -169,6 +170,7 @@ public class ApplicationService {
         Map<String, Object> vars = reason == null ? Map.of() : Map.of("declineReason", reason.toString());
         boolean published = camunda.publishMessage(MSG_CONTRACT_DECLINED, applicationId,
                 applicationId + ":" + MSG_CONTRACT_DECLINED, messageTtlMs, vars);
+        events.record(applicationId, CaseEventType.CONTRACT_DECLINED, reason == null ? null : reason.toString());
         log.info("[{}] contract declined", applicationId);
         return result(applicationId, MSG_CONTRACT_DECLINED, applicationId, published);
     }
@@ -176,26 +178,26 @@ public class ApplicationService {
     public Map<String, Object> transformerDelivered(String applicationId) {
         boolean published = camunda.publishMessage(MSG_TRANSFORMER_DELIVERED, applicationId,
                 applicationId + ":" + MSG_TRANSFORMER_DELIVERED, messageTtlMs, Map.of());
+        events.record(applicationId, CaseEventType.TRANSFORMER_DELIVERED, null);
         log.info("[{}] transformer delivered", applicationId);
         return result(applicationId, MSG_TRANSFORMER_DELIVERED, applicationId, published);
     }
 
     // ---------------------------------------------------------------- queries
 
-    public List<InboxStore.InboxItem> inbox(String applicationId) {
+    public List<InboxItem> inbox(String applicationId) {
         return inbox.forApplication(applicationId);
     }
 
-    /** Known cases: in-memory records joined with Camunda instances (cases started before a restart included). */
+    /** Known cases: stored records joined with Camunda instances (cases the database does not know included). */
     public List<Map<String, Object>> list() {
         Map<String, Map<String, Object>> rows = new LinkedHashMap<>();
-        for (ApplicationRecord r : applications.all()) {
+        for (ApplicationView r : applications.all()) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("applicationId", r.applicationId());
             row.put("submittedAt", r.submittedAt().toString());
-            Map<String, Object> vars = r.variables();
-            row.put("applicantName", vars.get("applicant") instanceof Map<?, ?> a ? a.get("name") : null);
-            row.put("processInstanceKey", r.processInstanceKey());
+            row.put("applicantName", r.applicantName());
+            row.put("processInstanceKey", r.processInstanceKey() == null ? null : r.processInstanceKey().toString());
             row.put("state", "PENDING");
             rows.put(r.applicationId(), row);
         }
@@ -218,7 +220,7 @@ public class ApplicationService {
                     row.put("processInstanceKey", key);
                     row.put("state", pi.get("state"));
                     row.put("hasIncident", pi.get("hasIncident"));
-                    applications.find(appId).ifPresent(r -> r.processInstanceKey(key));
+                    applications.updateProcessState(appId, key, pi.get("state"));
                 }
             }
         } catch (CamundaException e) {
@@ -230,7 +232,7 @@ public class ApplicationService {
 
     /** Timeline/status view of one case. */
     public Map<String, Object> status(String applicationId) {
-        Optional<ApplicationRecord> record = applications.find(applicationId);
+        Optional<ApplicationView> record = applications.find(applicationId);
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("applicationId", applicationId);
         record.ifPresent(r -> out.put("submittedAt", r.submittedAt().toString()));
@@ -249,7 +251,7 @@ public class ApplicationService {
                 out.put("openIncidents", 0);
             } else {
                 String key = String.valueOf(pi.get().get("processInstanceKey"));
-                record.ifPresent(r -> r.processInstanceKey(key));
+                applications.updateProcessState(applicationId, key, pi.get().get("state"));
                 out.put("processInstanceKey", key);
                 out.put("state", pi.get().get("state"));
                 out.put("startDate", pi.get().get("startDate"));

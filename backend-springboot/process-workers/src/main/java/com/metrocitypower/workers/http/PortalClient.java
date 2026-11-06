@@ -1,7 +1,8 @@
 package com.metrocitypower.workers.http;
 
+import com.metrocitypower.workers.logic.PortalPayloads.InboxItem;
+import com.metrocitypower.workers.logic.PortalPayloads.OpsAlert;
 import java.time.Duration;
-import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -18,11 +19,11 @@ public class PortalClient {
     this.http = new JsonHttp(baseUrl, connectTimeout, requestTimeout);
   }
 
-  public void postInbox(Map<String, Object> item) {
+  public void postInbox(InboxItem item) {
     http.expectOk(http.post("/internal/inbox", item), "portal inbox post");
   }
 
-  public void postOpsAlert(Map<String, Object> alert) {
+  public void postOpsAlert(OpsAlert alert) {
     http.expectOk(http.post("/internal/ops-alerts", alert), "portal ops alert");
   }
 }

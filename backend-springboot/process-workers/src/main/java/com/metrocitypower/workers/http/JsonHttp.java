@@ -1,6 +1,7 @@
 package com.metrocitypower.workers.http;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -18,7 +19,8 @@ import java.util.Map;
  */
 public class JsonHttp {
 
-  static final ObjectMapper MAPPER = new ObjectMapper();
+  static final ObjectMapper MAPPER = new ObjectMapper()
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   private static final TypeReference<Map<String, Object>> MAP = new TypeReference<>() {};
 
   private final String baseUrl;
@@ -35,6 +37,11 @@ public class JsonHttp {
   public record Result(int status, Map<String, Object> body, String rawBody) {
     public boolean ok() {
       return status >= 200 && status < 300;
+    }
+
+    /** The JSON body as a record, e.g. {@code bodyAs(Booking.class)}; unknown fields are ignored. */
+    public <T> T bodyAs(Class<T> type) {
+      return MAPPER.convertValue(body, type);
     }
   }
 

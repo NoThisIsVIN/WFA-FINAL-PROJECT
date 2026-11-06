@@ -4,6 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.metrocitypower.portal.camunda.CamundaException;
 import com.metrocitypower.portal.camunda.CamundaGateway;
 import com.metrocitypower.portal.mocks.MocksClient;
+import com.metrocitypower.portal.persistence.ApplicationEntity;
+import com.metrocitypower.portal.persistence.ApplicationRepository;
+import com.metrocitypower.portal.persistence.ApplicationStatus;
+import com.metrocitypower.portal.persistence.CaseEventType;
+import com.metrocitypower.portal.service.CaseEventService;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -48,6 +54,9 @@ class PortalApiTest {
     @Autowired ObjectMapper json;
     @MockitoBean CamundaGateway camunda;
     @MockitoBean MocksClient mocks;
+    @Autowired ApplicationRepository applicationRepository;
+    @Autowired CaseEventService caseEvents;
+    @Autowired EntityManager entityManager;
 
     @BeforeEach
     void setUp() {
@@ -350,6 +359,64 @@ class PortalApiTest {
         }
         assertThat(foundOwn).isTrue();
         assertThat(foundRestarted).isTrue();
+    }
+
+    // ------------------------------------------------------------ persistence
+
+    @Test
+    void submitStoresTheCaseWithDevicesAndActionsWriteTheAuditTrail() throws Exception {
+        String id = submit();
+        postJson("/api/applications/" + id + "/offer", Map.of("accept", true), 202);
+
+        ApplicationEntity stored = applicationRepository.findById(id).orElseThrow();
+        assertThat(stored.getApplicantName()).isEqualTo("Asha Rao");
+        assertThat(stored.getMeterId()).isEqualTo("MTR-55120");
+        assertThat(stored.getPvKw()).isEqualTo(6.5);
+        assertThat(stored.isPublished()).isTrue();
+        assertThat(stored.isDemoMode()).isTrue();
+        assertThat(stored.getStatus()).isEqualTo(ApplicationStatus.SUBMITTED);
+        assertThat(caseEvents.forApplication(id)).extracting(CaseEventService.CaseEvent::type)
+                .containsExactly(CaseEventType.SUBMITTED, CaseEventType.OFFER_ACCEPTED);
+        Long devices = (Long) entityManager.createQuery(
+                "select count(d) from DeviceEntity d where d.application.applicationId = :id")
+                .setParameter("id", id).getSingleResult();
+        assertThat(devices).isEqualTo(1L);
+    }
+
+    @Test
+    void statusReadFromCamundaIsSavedOnTheCase() throws Exception {
+        String id = submit();
+        when(camunda.findMainInstance(id)).thenReturn(Optional.of(
+                Map.of("processInstanceKey", 2251799813685300L, "state", "COMPLETED")));
+        when(camunda.elementInstances(anyString())).thenReturn(List.of());
+        when(camunda.processVariables(anyString())).thenReturn(Map.of());
+        when(camunda.findChildInstance(anyString())).thenReturn(Optional.empty());
+
+        mvc.perform(get("/api/applications/" + id)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.processInstanceKey").value("2251799813685300"));
+
+        ApplicationEntity stored = applicationRepository.findById(id).orElseThrow();
+        assertThat(stored.getStatus()).isEqualTo(ApplicationStatus.COMPLETED);
+        assertThat(stored.getProcessInstanceKey()).isEqualTo(2251799813685300L);
+    }
+
+    @Test
+    void fixUpdatesTheStoredColumnsAndDevices() throws Exception {
+        String id = submit();
+        postJson("/api/applications/" + id + "/fix", Map.of(
+                "site", Map.of("meterId", "MTR-77777"),
+                "devices", List.of(
+                        Map.of("serialNumber", "INV-009", "type", "INVERTER"),
+                        Map.of("serialNumber", "BAT-009", "type", "BATTERY"))), 202);
+
+        ApplicationEntity stored = applicationRepository.findById(id).orElseThrow();
+        assertThat(stored.getMeterId()).isEqualTo("MTR-77777");
+        assertThat(stored.getSubstationId()).isEqualTo("SUB-07");
+        assertThat(stored.getPayloadJson()).contains("MTR-77777").contains("BAT-009");
+        Long devices = (Long) entityManager.createQuery(
+                "select count(d) from DeviceEntity d where d.application.applicationId = :id")
+                .setParameter("id", id).getSingleResult();
+        assertThat(devices).isEqualTo(2L);
     }
 
     @Test

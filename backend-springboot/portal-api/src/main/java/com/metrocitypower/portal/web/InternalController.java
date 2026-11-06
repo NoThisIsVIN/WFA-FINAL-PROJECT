@@ -1,8 +1,9 @@
 package com.metrocitypower.portal.web;
 
 import com.metrocitypower.portal.camunda.CamundaGateway;
-import com.metrocitypower.portal.store.AlertStore;
-import com.metrocitypower.portal.store.InboxStore;
+import com.metrocitypower.portal.service.AlertService;
+import com.metrocitypower.portal.service.InboxItem;
+import com.metrocitypower.portal.service.InboxService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -21,11 +22,11 @@ public class InternalController {
 
     private static final Logger log = LoggerFactory.getLogger(InternalController.class);
 
-    private final InboxStore inbox;
-    private final AlertStore alerts;
+    private final InboxService inbox;
+    private final AlertService alerts;
     private final CamundaGateway camunda;
 
-    public InternalController(InboxStore inbox, AlertStore alerts, CamundaGateway camunda) {
+    public InternalController(InboxService inbox, AlertService alerts, CamundaGateway camunda) {
         this.inbox = inbox;
         this.alerts = alerts;
         this.camunda = camunda;
@@ -33,7 +34,7 @@ public class InternalController {
 
     @PostMapping("/internal/inbox")
     @SuppressWarnings("unchecked")
-    public ResponseEntity<InboxStore.InboxItem> inbox(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<InboxItem> inbox(@RequestBody Map<String, Object> body) {
         Object applicationId = body.get("applicationId");
         Object requestType = body.get("requestType");
         if (applicationId == null || requestType == null) {
@@ -41,7 +42,7 @@ public class InternalController {
         }
         Map<String, Object> payload = body.get("payload") instanceof Map<?, ?> p ? (Map<String, Object>) p : Map.of();
         Object createdAt = body.get("createdAt");
-        InboxStore.InboxItem item = inbox.add(applicationId.toString(), requestType.toString(), payload,
+        InboxItem item = inbox.add(applicationId.toString(), requestType.toString(), payload,
                 createdAt == null ? null : createdAt.toString());
         log.info("[{}] inbox request {} received ({})", applicationId, requestType, item.itemId());
         return ResponseEntity.status(HttpStatus.CREATED).body(item);
