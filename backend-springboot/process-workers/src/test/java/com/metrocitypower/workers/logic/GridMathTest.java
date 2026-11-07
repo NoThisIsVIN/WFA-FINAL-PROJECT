@@ -23,11 +23,4 @@ class GridMathTest {
   void exportLimitNeedsInverterSizeForFallback() {
     assertThatThrownBy(() -> GridMath.exportLimitKw(null, null)).isInstanceOf(IllegalArgumentException.class);
   }
-
-  @Test
-  void reservationUsesExportLimitOnlyWhenLimited() {
-    assertThat(GridMath.reservationKw(false, 2.0, 5.0)).isEqualTo(5.0);
-    assertThat(GridMath.reservationKw(true, 2.0, 5.0)).isEqualTo(2.0);
-    assertThat(GridMath.reservationKw(true, null, 5.0)).isEqualTo(5.0);
-  }
 }

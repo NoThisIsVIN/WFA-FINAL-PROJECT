@@ -7,6 +7,7 @@
     "zeebe": "zeebe-bpmn-moddle/resources/zeebe.json"
   },
   "rules": {
-    "no-implicit-end": "warn"
+    "no-implicit-end": "warn",
+    "camunda-compat/secrets": "off"
   }
 }

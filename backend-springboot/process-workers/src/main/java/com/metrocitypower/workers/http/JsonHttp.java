@@ -38,11 +38,6 @@ public class JsonHttp {
     public boolean ok() {
       return status >= 200 && status < 300;
     }
-
-    /** The JSON body as a record, e.g. {@code bodyAs(Booking.class)}; unknown fields are ignored. */
-    public <T> T bodyAs(Class<T> type) {
-      return MAPPER.convertValue(body, type);
-    }
   }
 
   public Result get(String path) {
@@ -51,10 +46,6 @@ public class JsonHttp {
 
   public Result post(String path, Object body) {
     return send("POST", path, body);
-  }
-
-  public Result delete(String path) {
-    return send("DELETE", path, null);
   }
 
   /** Throws if the status is not 2xx; use for calls that have no business-error outcome. */

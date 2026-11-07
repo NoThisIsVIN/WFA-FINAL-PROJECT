@@ -25,7 +25,6 @@ camunda:
         max-jobs-active: 8
 
 mcp:
-  mocks-url: ${MOCKS_URL:http://localhost:8091}
   portal-url: ${PORTAL_URL:http://localhost:8090}
   http:
     connect-timeout: 2s
