@@ -102,7 +102,7 @@ export default function FixRequestModal({ item, applicationId, onClose, onComple
                   applicant: { ...fixData.applicant, email: e.target.value }
                 })
               }
-              placeholder="e.g. maria.schmidt@enbw-solar.de"
+              placeholder="e.g. ravi.kumar@example.com"
               className="w-full text-xs rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white focus:outline-none focus:border-[#E5A93C]"
             />
           </div>

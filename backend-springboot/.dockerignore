@@ -1,0 +1,14 @@
+# Build context for the module Dockerfiles is backend-springboot/
+**/target/
+**/data/
+**/*.db
+**/*.mv.db
+**/*.trace.db
+**/*.log
+.idea/
+.vscode/
+**/*.iml
+.git/
+.DS_Store
+.env
+.env.*

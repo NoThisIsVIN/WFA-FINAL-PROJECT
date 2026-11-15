@@ -1,6 +1,6 @@
-# EnBW MetroCity Power - React Frontend Portal
+# Metro City Power - React Frontend Portal
 
-Modern React 18 + Vite + Tailwind CSS frontend application for **Use Case 25: Smart Grid Solar Microgenerator Connection Approval (Inspired by EnBW)**.
+Modern React 18 + Vite + Tailwind CSS frontend application for **Use Case 25: Smart Grid Solar Microgenerator Connection Approval**.
 
 Complies strictly with the **PROJECT DEVELOPMENT AND SUBMISSION GUIDELINES** (Milestone 2 Full-Stack Integration).
 

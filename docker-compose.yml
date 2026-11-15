@@ -1,0 +1,116 @@
+# Metro City Power solar connection approval - containerised backend + portal.
+# Camunda 8.10 (c8run) stays on the HOST: REST :8080, gRPC :26500, Connectors :8086, Mailpit :1025.
+# Containers reach it through host.docker.internal (extra_hosts makes this work on Linux too).
+# Usage:
+#   1. Start c8run on the host, deploy bpmn-models/, and set the connector secrets
+#      MOCKS_API_KEY / ESIGN_HMAC_SECRET to the same values as in .env (defaults below).
+#   2. Optional: cp .env.example .env   (every variable has a demo default, so this is not required)
+#   3. docker compose up --build -d
+#   4. Portal http://localhost:3000 | API http://localhost:8090/health | mocks http://localhost:8091/admin/state
+#   5. docker compose logs -f process-workers   |   docker compose down   (add -v to drop the database)
+# Port 8091 must stay free on the host: the BPMN REST connectors call http://localhost:8091.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-portal}
+      POSTGRES_USER: ${DB_USER:-portal}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-portal}
+    volumes:
+      - portal-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  mock-services:
+    build:
+      context: ./backend-springboot
+      dockerfile: mock-services/Dockerfile
+    environment:
+      MOCKS_API_KEY: ${MOCKS_API_KEY:-demo-mocks-key}
+      ESIGN_HMAC_SECRET: ${ESIGN_HMAC_SECRET:-demo-esign-secret}
+      # the webhook connector runs in the c8run connector runtime on the host
+      ESIGN_WEBHOOK_URL: ${ESIGN_WEBHOOK_URL:-http://host.docker.internal:8086/inbound/mcp-esign-callback}
+    ports:
+      - "8091:8091"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8091/admin/state"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  portal-api:
+    build:
+      context: ./backend-springboot
+      dockerfile: portal-api/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-portal}
+      DB_USER: ${DB_USER:-portal}
+      DB_PASSWORD: ${DB_PASSWORD:-portal}
+      CAMUNDA_URL: ${CAMUNDA_URL:-http://host.docker.internal:8080}
+      CAMUNDA_USER: ${CAMUNDA_USER:-demo}
+      CAMUNDA_PASSWORD: ${CAMUNDA_PASSWORD:-demo}
+      MOCKS_URL: http://mock-services:8091
+      # status page probe of the connector runtime (binds to connectors.url)
+      CONNECTORS_URL: ${CONNECTORS_URL:-http://host.docker.internal:8086}
+      # comma-separated; nginx on :3000 proxies same-origin, :5173 is the Vite dev server
+      PORTAL_CORS_ORIGINS: ${PORTAL_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+    ports:
+      - "8090:8090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mock-services:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  process-workers:
+    build:
+      context: ./backend-springboot
+      dockerfile: process-workers/Dockerfile
+    environment:
+      CAMUNDA_REST_URL: ${CAMUNDA_REST_URL:-http://host.docker.internal:8080}
+      CAMUNDA_GRPC_URL: ${CAMUNDA_GRPC_URL:-http://host.docker.internal:26500}
+      CAMUNDA_USER: ${CAMUNDA_USER:-demo}
+      CAMUNDA_PASSWORD: ${CAMUNDA_PASSWORD:-demo}
+      PORTAL_URL: http://portal-api:8090
+    depends_on:
+      portal-api:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend-react
+    ports:
+      - "3000:80"
+    depends_on:
+      portal-api:
+        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  portal-db:

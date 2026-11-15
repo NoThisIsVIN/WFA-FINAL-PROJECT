@@ -1,15 +1,15 @@
-# Stage 1: Build the React application
-FROM node:20-alpine AS build
+# Stage 1: build the React application (Vite)
+FROM node:20.18-alpine AS build
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve using Nginx
-FROM nginx:alpine
+# Stage 2: serve the static build with nginx; /api/ and /health are proxied to portal-api
+FROM nginx:1.27-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
