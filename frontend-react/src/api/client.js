@@ -80,7 +80,7 @@ export const api = {
       const res = await request('/system/connect', { method: 'POST' });
       return res;
     } catch {
-      return { connected: true, message: 'All services connected.' };
+      return { connected: false, message: 'Portal API (port 8090) is offline.' };
     }
   },
 

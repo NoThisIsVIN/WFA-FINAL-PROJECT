@@ -7,8 +7,8 @@ export default function DeviceArrayBuilder({ devices, setDevices, errors = {} })
     const newDevice = {
       serialNumber: type === 'INVERTER' ? `INV-SYS-${randomSuffix}` : `BAT-MOD-${randomSuffix}`,
       type: type,
-      model: type === 'INVERTER' ? 'SMA Sunny Tripower 10.0' : 'BYD Battery-Box HVS 5.1',
-      certificateId: type === 'INVERTER' ? 'CERT-VDE-AR-N-4105' : 'CERT-UN-38.3'
+      model: type === 'INVERTER' ? 'SunWave Hybrid 10K' : 'VoltStore 5 kWh',
+      certificateId: type === 'INVERTER' ? 'CERT-INV-1001' : 'CERT-BAT-5001'
     };
     setDevices([...devices, newDevice]);
   };
@@ -150,7 +150,7 @@ export default function DeviceArrayBuilder({ devices, setDevices, errors = {} })
                       type="text"
                       value={device.certificateId || ''}
                       onChange={(e) => updateDevice(idx, 'certificateId', e.target.value)}
-                      placeholder="e.g. CERT-VDE-4105"
+                      placeholder="e.g. CERT-INV-1001"
                       className="w-full text-xs font-mono rounded-xl bg-[#18181C] border border-[#27272E] px-3 py-1.5 text-white focus:border-[#E5A93C] focus:outline-none"
                     />
                   </div>

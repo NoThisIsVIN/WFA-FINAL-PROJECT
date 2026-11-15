@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
+import { gsap, useGSAP, prefersReducedMotion } from '../../motion/motion';
 import {
   Sun,
   Layers,
@@ -41,6 +42,30 @@ export default function Navbar() {
   });
 
   const popoverRef = useRef(null);
+  const navRef = useRef(null);
+  const pillRef = useRef(null);
+
+  // Sliding highlight behind the active tab
+  useGSAP(
+    () => {
+      const nav = navRef.current;
+      const pill = pillRef.current;
+      if (!nav || !pill) return;
+      const place = (animate) => {
+        const btn = nav.querySelector(`[data-tab="${activeTab}"]`);
+        if (!btn) return gsap.set(pill, { autoAlpha: 0 });
+        const to = { x: btn.offsetLeft, width: btn.offsetWidth, autoAlpha: 1 };
+        if (animate && !prefersReducedMotion()) gsap.to(pill, { ...to, duration: 0.5, ease: 'power3.out', overwrite: true });
+        else gsap.set(pill, to);
+      };
+      place(pill.dataset.placed === '1');
+      pill.dataset.placed = '1';
+      const onResize = () => place(false);
+      window.addEventListener('resize', onResize);
+      return () => window.removeEventListener('resize', onResize);
+    },
+    { dependencies: [activeTab], revertOnUpdate: false }
+  );
 
   // Poll system status
   const checkStatus = async () => {
@@ -76,19 +101,11 @@ export default function Navbar() {
     setConnecting(true);
     try {
       const res = await api.connectAllServices();
-      await checkStatus();
       await refreshApplications();
-      setSystemStatus({
-        allOnline: true,
-        backendMode: res?.backendMode || 'SIMULATION',
-        services: [
-          { name: 'Spring Boot Portal API', port: 8090, status: 'UP', ready: true },
-          { name: 'Camunda 8 Zeebe Engine', port: 26500, status: 'CONNECTED', ready: true },
-          { name: 'Weather & Irradiance API', port: 8091, status: 'UP', ready: true },
-          { name: 'Grid Database (H2/Postgres)', port: 'Active', status: 'READY', ready: true }
-        ]
-      });
-      addToast('Connected! All backend APIs, Camunda 8, and database are now online.', 'success');
+      if (res && Array.isArray(res.services)) setSystemStatus(res);
+      else await checkStatus();
+      if (res?.connected) addToast('Connected: portal API, Camunda 8, connectors and mock services are online.', 'success');
+      else addToast(res?.message || 'Some services are offline.', 'error');
       setShowStatusPopover(false);
     } catch (err) {
       addToast(`Connection error: ${err.message}`, 'error');
@@ -122,12 +139,17 @@ export default function Navbar() {
     { id: 'apply', label: 'Apply Now', icon: Sun },
     { id: 'applications', label: 'All Applications', icon: Layers, count: applications.length },
     { id: 'tracker', label: 'Track Status', icon: Activity },
-    { id: 'inbox', label: 'Action Required', icon: Inbox, count: 1 },
+    { id: 'inbox', label: 'Action Required', icon: Inbox },
     { id: 'ops', label: 'Grid Admin', icon: Settings }
   ];
 
   return (
-    <header className="sticky top-3 z-40 w-full max-w-7xl mx-auto px-4 mb-6">
+    <header className="sticky top-0 z-40 w-full max-w-7xl mx-auto px-4 pt-3 pb-3 mb-3">
+      {/* Full-width frosted band so page content scrolling underneath is blurred, fading out at the bottom */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -z-10 inset-y-0 left-1/2 -translate-x-1/2 w-screen bg-[#0F0F12]/70 backdrop-blur-xl [mask-image:linear-gradient(to_bottom,black_75%,transparent)]"
+      />
       {/* Top Floating Golden Warning Pill (Matching Image Inspiration) */}
       <div className="flex justify-center mb-2.5">
         {!systemStatus.allOnline ? (
@@ -164,7 +186,7 @@ export default function Navbar() {
       </div>
 
       {/* Floating Dark Dock Bar */}
-      <div className="bg-[#18181C]/95 backdrop-blur-xl border border-[#27272E] rounded-2xl px-4 py-2 shadow-2xl flex items-center justify-between gap-3 relative">
+      <div className="bg-[#18181C]/95 backdrop-blur-xl border border-[#27272E] rounded-2xl px-4 py-2 shadow-2xl flex flex-wrap items-center justify-between gap-3 relative">
         {/* Brand with live status indicator pill */}
         <div className="relative" ref={popoverRef}>
           <div
@@ -260,18 +282,22 @@ export default function Navbar() {
         </div>
 
         {/* Navigation Tabs */}
-        <nav className="flex items-center space-x-1 overflow-x-auto py-0.5 flex-shrink-0">
+        <nav ref={navRef} className="relative flex items-center space-x-1 overflow-x-auto py-0.5 min-w-0 max-w-full">
+          <span
+            ref={pillRef}
+            aria-hidden="true"
+            className="absolute left-0 top-0.5 h-9 rounded-xl bg-[#2A2A32] border border-[#3E3E4A] shadow-[0_0_18px_rgba(229,169,60,0.12)] pointer-events-none invisible"
+          />
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
+                data-tab={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`h-9 flex items-center space-x-1.5 px-3 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0 cursor-pointer ${
-                  isActive
-                    ? 'bg-[#2A2A32] text-white border border-[#3E3E4A] shadow-sm'
-                    : 'text-zinc-400 hover:text-white hover:bg-[#202026] border border-transparent'
+                className={`relative z-10 h-9 flex items-center space-x-1.5 px-3 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0 cursor-pointer border border-transparent ${
+                  isActive ? 'text-white' : 'text-zinc-400 hover:text-white hover:bg-[#202026]/60'
                 }`}
               >
                 <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isActive ? 'text-[#E5A93C]' : 'text-zinc-500'}`} />

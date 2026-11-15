@@ -64,8 +64,8 @@ export default function ContractSignModal({ item, applicationId, onClose, onComp
         <div className="p-4 rounded-xl bg-[#202026] border border-[#2B2B34] text-xs space-y-2 text-zinc-300">
           <p className="font-bold text-white font-mono uppercase text-[10px]">Contract Terms Summary:</p>
           <ul className="list-disc list-inside space-y-1 text-zinc-400 text-[11px]">
-            <li>Installation of EnBW bidirectional smart meter.</li>
-            <li>Guaranteed 20-year Feed-in Tariff (EEG standard tariff schedule).</li>
+            <li>Installation of a Metro City Power bidirectional smart meter.</li>
+            <li>Feed-in tariff rate set by the Metro City Power tariff table.</li>
             <li>Zero-export compliance telemetry and automated remote protection disconnects.</li>
             <li>Case: <span className="text-[#E5A93C] font-mono font-bold">{applicationId}</span></li>
           </ul>

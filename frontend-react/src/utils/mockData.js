@@ -5,44 +5,23 @@ export const PRESETS = [
     id: 'homeowner-standard',
     label: 'Homeowner Solar 6.5 kW',
     tag: 'Standard Fast-Path',
-    description: 'Typical single-family home with 6.5 kW PV and 1 Hybrid Inverter.',
+    description: 'Single-family home with 6.5 kW PV, one hybrid inverter and a small battery.',
     data: {
-      applicant: {
-        name: 'Maria Schmidt',
-        email: 'm.schmidt@berlin-green.de',
-        type: 'HOME'
-      },
+      applicant: { name: 'Asha Rao', email: 'asha.rao@example.com', type: 'HOME' },
       site: {
-        address: 'Sonnenallee 142, 12059 Berlin',
-        region: 'Berlin-Sued',
-        lat: 52.4821,
-        lon: 13.4354,
-        meterId: 'DE0001234567890001',
-        substationId: 'SUB-BERLIN-04'
+        address: '14 Lakeview Road, Metro City',
+        region: 'Metro City North',
+        lat: 12.9716,
+        lon: 77.5946,
+        meterId: 'MCP-MTR-100001',
+        substationId: 'SUB-07'
       },
-      system: {
-        pvKw: 6.5,
-        inverterKw: 6.0,
-        batteryKwh: 5.0,
-        batteryKw: 3.0
-      },
+      system: { pvKw: 6.5, inverterKw: 6.0, batteryKwh: 5.0, batteryKw: 3.0 },
       devices: [
-        {
-          serialNumber: 'INV-SMA-2026-9901',
-          type: 'INVERTER',
-          model: 'SMA Sunny Tripower 6.0 Smart Energy',
-          certificateId: 'CERT-VDE-AR-N-4105'
-        },
-        {
-          serialNumber: 'BAT-BYD-2026-4412',
-          type: 'BATTERY',
-          model: 'BYD Battery-Box Premium HVS 5.1',
-          certificateId: 'CERT-UN-38.3'
-        }
+        { serialNumber: 'INV-H-0001', type: 'INVERTER', model: 'SunWave Hybrid 6K', certificateId: 'CERT-INV-6001' },
+        { serialNumber: 'BAT-H-0001', type: 'BATTERY', model: 'VoltStore 5.1 kWh', certificateId: 'CERT-BAT-5101' }
       ],
-      installer: {
-        licenseNo: 'CERT-INST-DE-99418'
-      },
+      installer: { licenseNo: 'LIC-3321' },
       demoMode: true,
       useMockWeather: true
     }
@@ -51,50 +30,24 @@ export const PRESETS = [
     id: 'factory-industrial',
     label: 'Factory Solar Array 45 kW + Storage',
     tag: 'Commercial Multi-Instance',
-    description: 'Industrial manufacturing warehouse with multiple parallel inverters and high-capacity storage.',
+    description: 'Factory roof with two parallel inverters and a 30 kWh battery: one inspection per device.',
     data: {
-      applicant: {
-        name: 'TechFab Precision GmbH (Dr. Klaus Weber)',
-        email: 'k.weber@techfab-precision.de',
-        type: 'FACTORY'
-      },
+      applicant: { name: 'Kaveri Textiles Pvt Ltd', email: 'energy@kaveri-textiles.example.com', type: 'FACTORY' },
       site: {
-        address: 'Industriestrasse 88, 70565 Stuttgart',
-        region: 'Baden-Wuerttemberg',
-        lat: 48.7214,
-        lon: 9.1235,
-        meterId: 'DE0009876543210042',
-        substationId: 'SUB-STUTTGART-02'
+        address: 'Plot 22, Industrial Estate Phase 2, Metro City',
+        region: 'Metro City East',
+        lat: 12.9352,
+        lon: 77.6245,
+        meterId: 'MCP-MTR-200042',
+        substationId: 'SUB-08'
       },
-      system: {
-        pvKw: 45.0,
-        inverterKw: 40.0,
-        batteryKwh: 30.0,
-        batteryKw: 15.0
-      },
+      system: { pvKw: 45.0, inverterKw: 40.0, batteryKwh: 30.0, batteryKw: 15.0 },
       devices: [
-        {
-          serialNumber: 'INV-FRO-2026-701',
-          type: 'INVERTER',
-          model: 'Fronius Eco 25.0-3-S',
-          certificateId: 'CERT-VDE-4110'
-        },
-        {
-          serialNumber: 'INV-FRO-2026-702',
-          type: 'INVERTER',
-          model: 'Fronius Symo 15.0-3-M',
-          certificateId: 'CERT-VDE-4110'
-        },
-        {
-          serialNumber: 'BAT-TES-2026-880',
-          type: 'BATTERY',
-          model: 'Tesla Powerpack Commercial 30kWh',
-          certificateId: 'CERT-IEC-62619'
-        }
+        { serialNumber: 'INV-F-0701', type: 'INVERTER', model: 'SunWave Pro 25K', certificateId: 'CERT-INV-2501' },
+        { serialNumber: 'INV-F-0702', type: 'INVERTER', model: 'SunWave Pro 15K', certificateId: 'CERT-INV-1501' },
+        { serialNumber: 'BAT-F-0880', type: 'BATTERY', model: 'VoltStore Commercial 30 kWh', certificateId: 'CERT-BAT-3001' }
       ],
-      installer: {
-        licenseNo: 'LIC-ENBW-MASTER-7782'
-      },
+      installer: { licenseNo: 'LIC-4410' },
       demoMode: true,
       useMockWeather: true
     }
@@ -103,50 +56,24 @@ export const PRESETS = [
     id: 'high-grid-load',
     label: 'High Substation Load (Upgrade Trigger)',
     tag: 'Sub-Process Demo',
-    description: 'High generation capacity on a strained substation designed to test the Transformer Capacity Upgrade sub-process.',
+    description: 'Large system on a nearly full substation (SUB-09) to trigger the Transformer Capacity Upgrade sub-process.',
     data: {
-      applicant: {
-        name: 'Mueller Agro-Bio Logistics',
-        email: 'energy@mueller-agrobio.de',
-        type: 'FACTORY'
-      },
+      applicant: { name: 'Godavari Cold Storage', email: 'ops@godavari-cold.example.com', type: 'FACTORY' },
       site: {
-        address: 'Am Windpark 12, 76131 Karlsruhe',
-        region: 'Karlsruhe-Nord',
-        lat: 49.0234,
-        lon: 8.4421,
-        meterId: 'DE0005556667770088',
-        substationId: 'SUB-OVERLOAD-99'
+        address: 'Survey No. 81, Ring Road, Metro City',
+        region: 'Metro City South',
+        lat: 12.9081,
+        lon: 77.6476,
+        meterId: 'MCP-MTR-300088',
+        substationId: 'SUB-09'
       },
-      system: {
-        pvKw: 80.0,
-        inverterKw: 75.0,
-        batteryKwh: 50.0,
-        batteryKw: 25.0
-      },
+      system: { pvKw: 80.0, inverterKw: 75.0, batteryKwh: 50.0, batteryKw: 25.0 },
       devices: [
-        {
-          serialNumber: 'INV-KA-2026-001',
-          type: 'INVERTER',
-          model: 'Huawei SUN2000-50KTL-M3',
-          certificateId: 'CERT-VDE-4105'
-        },
-        {
-          serialNumber: 'INV-KA-2026-002',
-          type: 'INVERTER',
-          model: 'Huawei SUN2000-25KTL-M3',
-          certificateId: 'CERT-VDE-4105'
-        },
-        {
-          serialNumber: 'BAT-KA-2026-B1',
-          type: 'BATTERY',
-          model: 'Huawei LUNA2000-50kWh',
-          certificateId: 'CERT-UN-38.3'
-        }
+        { serialNumber: 'INV-U-0001', type: 'INVERTER', model: 'SunWave Pro 50K', certificateId: 'CERT-INV-5001' },
+        { serialNumber: 'INV-U-0002', type: 'INVERTER', model: 'SunWave Pro 25K', certificateId: 'CERT-INV-2502' },
+        { serialNumber: 'BAT-U-0001', type: 'BATTERY', model: 'VoltStore Commercial 50 kWh', certificateId: 'CERT-BAT-5001' }
       ],
-      installer: {
-        licenseNo: 'LIC-SOLAR-PRO-992'
-      },
+      installer: { licenseNo: 'LIC-3321' },
       demoMode: true,
       useMockWeather: true
     }

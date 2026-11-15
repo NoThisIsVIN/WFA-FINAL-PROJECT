@@ -22,6 +22,24 @@ import {
   Loader2
 } from 'lucide-react';
 
+// Process variables come from Camunda as objects; turn them into short labels.
+const SIZE_LABEL = { SMALL: 'Small (fast track)', MEDIUM: 'Medium', LARGE: 'Large (engineer review)' };
+function classificationLabel(c) {
+  if (!c) return 'Pending';
+  if (typeof c === 'string') return c;
+  const size = SIZE_LABEL[c.sizeClass] || c.sizeClass || '';
+  return [size, c.priority && `${c.priority} priority`].filter(Boolean).join(' · ');
+}
+function gridLabel(g) {
+  if (!g) return 'Pending';
+  return { OK: 'OK, capacity available', TIGHT: 'Tight, engineer review', OVERLOAD: 'Overloaded, upgrade needed' }[g] || g;
+}
+function tariffLabel(t) {
+  if (!t) return 'Pending';
+  if (typeof t === 'string') return t;
+  return `₹${t.ratePerKwhRs} / kWh (${t.tariffCode})`;
+}
+
 export default function LiveProcessTracker() {
   const {
     selectedAppId,
@@ -100,7 +118,7 @@ export default function LiveProcessTracker() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Top Selector & Refresh Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#18181C] p-4 rounded-2xl border border-[#27272E] shadow-xl">
         <div className="flex items-center space-x-3">
@@ -211,8 +229,8 @@ export default function LiveProcessTracker() {
 
       {/* Step-by-Step Approval Timeline */}
       <ProcessFlowChart
-        activeElements={statusData?.activeElements || []}
-        finishedElements={statusData?.finishedElements || []}
+        activeElements={statusData?.activeElementIds || statusData?.activeElements || []}
+        finishedElements={statusData?.finishedElementIds || statusData?.finishedElements || []}
         processState={statusData?.state || 'ACTIVE'}
       />
 
@@ -234,15 +252,15 @@ export default function LiveProcessTracker() {
             </div>
             <div className="flex justify-between py-1.5 border-b border-[#27272E]">
               <span className="text-zinc-400">Connection Category:</span>
-              <span className="font-semibold text-[#E5A93C]">{statusData?.variables?.classification || 'Residential Solar'}</span>
+              <span className="font-semibold text-[#E5A93C]">{classificationLabel(statusData?.variables?.classification)}</span>
             </div>
             <div className="flex justify-between py-1.5 border-b border-[#27272E]">
               <span className="text-zinc-400">Power Grid Capacity:</span>
-              <span className="font-semibold text-[#22C55E]">{statusData?.variables?.gridLoadStatus || 'Safe Substation Load'}</span>
+              <span className="font-semibold text-[#22C55E]">{gridLabel(statusData?.variables?.gridLoadStatus)}</span>
             </div>
             <div className="flex justify-between py-1.5">
               <span className="text-zinc-400">Approved Feed-In Limit:</span>
-              <span className="font-mono font-bold text-white">{statusData?.variables?.exportLimitKw || 6.0} kW</span>
+              <span className="font-mono font-bold text-white">{statusData?.variables?.exportLimitKw != null ? `${statusData.variables.exportLimitKw} kW` : 'No limit'}</span>
             </div>
           </div>
         </div>
@@ -257,31 +275,27 @@ export default function LiveProcessTracker() {
           </div>
 
           <div className="space-y-2.5">
-            <div className="p-3 rounded-xl bg-[#202026] border border-[#2B2B34] flex items-center justify-between text-xs">
-              <div className="flex items-center space-x-2">
-                <Zap className="w-4 h-4 text-[#E5A93C]" />
-                <div>
-                  <div className="font-bold text-white">Solar Inverter #1 (INV-SMA-2026)</div>
-                  <div className="text-[10px] text-zinc-400 font-mono">Tested: Electrical Grounding & Inverter Cut-off</div>
+            {(statusData?.variables?.inspectionResults || []).length === 0 && (
+              <div className="text-xs text-zinc-400">No inspection results yet.</div>
+            )}
+            {(statusData?.variables?.inspectionResults || []).map((r) => {
+              const Icon = r.type === 'BATTERY' ? BatteryCharging : Zap;
+              const pass = r.outcome === 'PASS';
+              return (
+                <div key={r.serialNumber} className="p-3 rounded-xl bg-[#202026] border border-[#2B2B34] flex items-center justify-between text-xs">
+                  <div className="flex items-center space-x-2">
+                    <Icon className="w-4 h-4 text-[#E5A93C]" />
+                    <div>
+                      <div className="font-bold text-white">{r.type === 'BATTERY' ? 'Battery' : 'Inverter'} ({r.serialNumber})</div>
+                      <div className="text-[10px] text-zinc-400 font-mono">{r.notes || 'Safety inspection'}{r.earthOhm != null ? ` · earth ${r.earthOhm} Ω` : ''}</div>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${pass ? 'bg-emerald-500/20 text-[#22C55E] border-emerald-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
+                    {r.outcome}{r.insulationMOhm != null ? ` (${r.insulationMOhm} MΩ)` : ''}
+                  </span>
                 </div>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-[#22C55E] border border-emerald-500/30">
-                PASS (25.4 MΩ)
-              </span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-[#202026] border border-[#2B2B34] flex items-center justify-between text-xs">
-              <div className="flex items-center space-x-2">
-                <BatteryCharging className="w-4 h-4 text-[#22C55E]" />
-                <div>
-                  <div className="font-bold text-white">Battery Storage Unit (BAT-BYD-2026)</div>
-                  <div className="text-[10px] text-zinc-400 font-mono">Tested: Surge Disconnect & Overheat Guard</div>
-                </div>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-[#22C55E] border border-emerald-500/30">
-                PASS (32.1 MΩ)
-              </span>
-            </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -308,7 +322,7 @@ export default function LiveProcessTracker() {
             </div>
             <div className="p-3 bg-[#202026] rounded-xl border border-[#2B2B34]">
               <span className="block text-zinc-400 text-[11px]">Feed-in Tariff</span>
-              <span className="font-bold text-[#E5A93C]">8.2 Cent / kWh (20-Year Guarantee)</span>
+              <span className="font-bold text-[#E5A93C]">{tariffLabel(statusData?.variables?.tariff)}</span>
             </div>
             <div className="p-3 bg-[#202026] rounded-xl border border-[#2B2B34]">
               <span className="block text-zinc-400 text-[11px]">Meter Telemetry</span>

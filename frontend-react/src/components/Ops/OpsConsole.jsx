@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
+import CountUp from '../../motion/CountUp';
 import {
   Cpu,
   AlertTriangle,
@@ -137,7 +138,7 @@ export default function OpsConsole() {
         <div className="bg-[#18181C] p-4 rounded-2xl border border-[#27272E] shadow-xl">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Total Cases</span>
           <span className="text-2xl font-black text-white mt-1 block font-mono">
-            {summary?.knownApplications ?? applications.length}
+            <CountUp value={summary?.knownApplications ?? applications.length} />
           </span>
           <span className="text-[10px] text-zinc-500">Applications</span>
         </div>
@@ -145,7 +146,7 @@ export default function OpsConsole() {
         <div className="bg-[#18181C] p-4 rounded-2xl border border-[#27272E] shadow-xl">
           <span className="text-[10px] font-bold text-[#E5A93C] uppercase tracking-wider block">In Review</span>
           <span className="text-2xl font-black text-[#E5A93C] mt-1 block font-mono">
-            {summary?.activeCases ?? 0}
+            <CountUp value={summary?.activeCases ?? 0} />
           </span>
           <span className="text-[10px] text-zinc-500">Active review</span>
         </div>
@@ -153,7 +154,7 @@ export default function OpsConsole() {
         <div className="bg-[#18181C] p-4 rounded-2xl border border-[#27272E] shadow-xl">
           <span className="text-[10px] font-bold text-[#22C55E] uppercase tracking-wider block">Approved</span>
           <span className="text-2xl font-black text-[#22C55E] mt-1 block font-mono">
-            {summary?.completedCases ?? 0}
+            <CountUp value={summary?.completedCases ?? 0} />
           </span>
           <span className="text-[10px] text-zinc-500">Grid connected</span>
         </div>
@@ -161,7 +162,7 @@ export default function OpsConsole() {
         <div className="bg-[#18181C] p-4 rounded-2xl border border-[#27272E] shadow-xl">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Closed</span>
           <span className="text-2xl font-black text-zinc-400 mt-1 block font-mono">
-            {summary?.terminatedCases ?? 0}
+            <CountUp value={summary?.terminatedCases ?? 0} />
           </span>
           <span className="text-[10px] text-zinc-500">Withdrawn</span>
         </div>
@@ -169,7 +170,7 @@ export default function OpsConsole() {
         <div className="bg-[#18181C] p-4 rounded-2xl border border-[#27272E] shadow-xl">
           <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider block">Issues</span>
           <span className="text-2xl font-black text-rose-400 mt-1 block font-mono">
-            {summary?.openIncidents ?? 0}
+            <CountUp value={summary?.openIncidents ?? 0} />
           </span>
           <span className="text-[10px] text-zinc-500">Active alerts</span>
         </div>
@@ -177,7 +178,7 @@ export default function OpsConsole() {
         <div className="bg-[#18181C] p-4 rounded-2xl border border-[#27272E] shadow-xl">
           <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block">User Tasks</span>
           <span className="text-2xl font-black text-blue-400 mt-1 block font-mono">
-            {summary?.openUserTasks ?? 0}
+            <CountUp value={summary?.openUserTasks ?? 0} />
           </span>
           <span className="text-[10px] text-zinc-500">Pending reply</span>
         </div>

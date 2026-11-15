@@ -15,19 +15,28 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-const INITIAL_FORM = {
+// Synthetic Metro City Power data; ids match what the mock services accept.
+const freshMeterId = () => `MCP-MTR-${Date.now().toString().slice(-6)}`;
+
+const SUBSTATIONS = [
+  { id: 'SUB-07', label: 'SUB-07 · North' },
+  { id: 'SUB-08', label: 'SUB-08 · East' },
+  { id: 'SUB-09', label: 'SUB-09 · South (near full)' }
+];
+
+const makeInitialForm = () => ({
   applicant: {
-    name: 'Hans Becker',
-    email: 'h.becker@solar-heim.de',
+    name: 'Ravi Kumar',
+    email: 'ravi.kumar@example.com',
     type: 'HOME'
   },
   site: {
-    address: 'Kaiserstrasse 45, 76133 Karlsruhe',
-    region: 'Karlsruhe',
-    lat: 49.0069,
-    lon: 8.4037,
-    meterId: 'DE0007894561230019',
-    substationId: 'SUB-KA-CENTRAL'
+    address: '7 Banyan Street, Metro City',
+    region: 'Metro City North',
+    lat: 12.9716,
+    lon: 77.5946,
+    meterId: freshMeterId(),
+    substationId: 'SUB-07'
   },
   system: {
     pvKw: 8.0,
@@ -37,33 +46,36 @@ const INITIAL_FORM = {
   },
   devices: [
     {
-      serialNumber: 'INV-SMA-8831',
+      serialNumber: 'INV-H-8831',
       type: 'INVERTER',
-      model: 'SMA Sunny Tripower 8.0',
-      certificateId: 'CERT-VDE-AR-N-4105'
+      model: 'SunWave Hybrid 8K',
+      certificateId: 'CERT-INV-8001'
     },
     {
-      serialNumber: 'BAT-BYD-9912',
+      serialNumber: 'BAT-H-9912',
       type: 'BATTERY',
-      model: 'BYD Battery-Box HVS 10.2',
-      certificateId: 'CERT-UN-38.3'
+      model: 'VoltStore 10 kWh',
+      certificateId: 'CERT-BAT-1001'
     }
   ],
   installer: {
-    licenseNo: 'LIC-ENBW-EXP-5521'
+    licenseNo: 'LIC-3321'
   },
   demoMode: true,
   useMockWeather: true
-};
+});
 
 export default function ApplicationWizard() {
   const { selectApplication, refreshApplications, addToast } = useApp();
-  const [formData, setFormData] = useState(INITIAL_FORM);
+  const [formData, setFormData] = useState(makeInitialForm);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
   const handlePresetSelect = (presetData) => {
-    setFormData(JSON.parse(JSON.stringify(presetData)));
+    const data = JSON.parse(JSON.stringify(presetData));
+    // fresh meter id each time: the backend rejects a second open case on the same meter (F02)
+    data.site.meterId = `${data.site.meterId.split('-').slice(0, 2).join('-')}-${Date.now().toString().slice(-6)}`;
+    setFormData(data);
     setErrors({});
     addToast('Example details filled in!', 'info');
   };
@@ -127,7 +139,7 @@ export default function ApplicationWizard() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Header Banner */}
       <div className="bg-[#18181C] border border-[#27272E] rounded-2xl p-6 shadow-2xl">
         <h2 className="text-2xl font-black text-white tracking-tight">
@@ -143,9 +155,9 @@ export default function ApplicationWizard() {
       <PresetsBar onSelectPreset={handlePresetSelect} />
 
       {/* Main Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Section 1: Who is applying */}
-        <div className="bg-[#18181C] border border-[#27272E] rounded-2xl p-6 shadow-xl space-y-4">
+        <div className="lg:col-span-5 bg-[#18181C] border border-[#27272E] rounded-2xl p-6 lg:p-7 shadow-xl space-y-5">
           <div className="flex items-center space-x-2 border-b border-[#27272E] pb-3">
             <User className="w-4 h-4 text-[#E5A93C]" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
@@ -153,8 +165,8 @@ export default function ApplicationWizard() {
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-zinc-400 mb-1">
                 Full Name / Business Name <span className="text-rose-400">*</span>
               </label>
@@ -167,8 +179,8 @@ export default function ApplicationWizard() {
                     applicant: { ...formData.applicant, name: e.target.value }
                   })
                 }
-                className="w-full text-xs rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white focus:border-[#E5A93C] focus:outline-none"
-                placeholder="e.g. Maria Schmidt"
+                className="w-full text-sm rounded-xl bg-[#202026] border border-[#2B2B34] px-3.5 py-3 text-white focus:border-[#E5A93C] focus:outline-none"
+                placeholder="e.g. Ravi Kumar"
               />
               {errors['applicant.name'] && (
                 <p className="text-[11px] text-rose-400 mt-1">{errors['applicant.name']}</p>
@@ -188,8 +200,8 @@ export default function ApplicationWizard() {
                     applicant: { ...formData.applicant, email: e.target.value }
                   })
                 }
-                className="w-full text-xs rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white focus:border-[#E5A93C] focus:outline-none"
-                placeholder="e.g. maria@example.com"
+                className="w-full text-sm rounded-xl bg-[#202026] border border-[#2B2B34] px-3.5 py-3 text-white focus:border-[#E5A93C] focus:outline-none"
+                placeholder="e.g. ravi.kumar@example.com"
               />
               {errors['applicant.email'] && (
                 <p className="text-[11px] text-rose-400 mt-1">{errors['applicant.email']}</p>
@@ -208,7 +220,7 @@ export default function ApplicationWizard() {
                     applicant: { ...formData.applicant, type: e.target.value }
                   })
                 }
-                className="w-full text-xs rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white font-bold focus:border-[#E5A93C] focus:outline-none"
+                className="w-full text-sm rounded-xl bg-[#202026] border border-[#2B2B34] px-3.5 py-3 text-white font-bold focus:border-[#E5A93C] focus:outline-none"
               >
                 <option value="HOME">Residential Home</option>
                 <option value="FACTORY">Commercial Factory / Warehouse</option>
@@ -218,7 +230,7 @@ export default function ApplicationWizard() {
         </div>
 
         {/* Section 2: Address */}
-        <div className="bg-[#18181C] border border-[#27272E] rounded-2xl p-6 shadow-xl space-y-4">
+        <div className="lg:col-span-7 bg-[#18181C] border border-[#27272E] rounded-2xl p-6 lg:p-7 shadow-xl space-y-5">
           <div className="flex items-center space-x-2 border-b border-[#27272E] pb-3">
             <MapPin className="w-4 h-4 text-[#E5A93C]" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
@@ -226,7 +238,7 @@ export default function ApplicationWizard() {
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div className="md:col-span-2">
               <label className="block text-xs font-semibold text-zinc-400 mb-1">
                 Street Address <span className="text-rose-400">*</span>
@@ -240,8 +252,8 @@ export default function ApplicationWizard() {
                     site: { ...formData.site, address: e.target.value }
                   })
                 }
-                className="w-full text-xs rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white focus:border-[#E5A93C] focus:outline-none"
-                placeholder="e.g. Kaiserstrasse 45, 76133 Karlsruhe"
+                className="w-full text-sm rounded-xl bg-[#202026] border border-[#2B2B34] px-3.5 py-3 text-white focus:border-[#E5A93C] focus:outline-none"
+                placeholder="e.g. 7 Banyan Street, Metro City"
               />
             </div>
 
@@ -258,8 +270,8 @@ export default function ApplicationWizard() {
                     site: { ...formData.site, region: e.target.value }
                   })
                 }
-                className="w-full text-xs rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white focus:border-[#E5A93C] focus:outline-none"
-                placeholder="e.g. Karlsruhe"
+                className="w-full text-sm rounded-xl bg-[#202026] border border-[#2B2B34] px-3.5 py-3 text-white focus:border-[#E5A93C] focus:outline-none"
+                placeholder="e.g. Metro City North"
               />
             </div>
 
@@ -267,8 +279,7 @@ export default function ApplicationWizard() {
               <label className="block text-xs font-semibold text-zinc-400 mb-1">
                 Local Power Substation <span className="text-rose-400">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.site.substationId}
                 onChange={(e) =>
                   setFormData({
@@ -276,9 +287,14 @@ export default function ApplicationWizard() {
                     site: { ...formData.site, substationId: e.target.value }
                   })
                 }
-                className="w-full text-xs font-mono rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white focus:border-[#E5A93C] focus:outline-none"
-                placeholder="e.g. SUB-KA-CENTRAL"
-              />
+                className="w-full text-sm font-mono rounded-xl bg-[#202026] border border-[#2B2B34] px-3.5 py-3 text-white focus:border-[#E5A93C] focus:outline-none"
+              >
+                {SUBSTATIONS.map((s) => (
+                  <option key={s.id} value={s.id} className="bg-[#18181C]">
+                    {s.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -294,8 +310,8 @@ export default function ApplicationWizard() {
                     site: { ...formData.site, meterId: e.target.value }
                   })
                 }
-                className="w-full text-xs font-mono rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white focus:border-[#E5A93C] focus:outline-none"
-                placeholder="e.g. DE0007894561230019"
+                className="w-full text-sm font-mono rounded-xl bg-[#202026] border border-[#2B2B34] px-3.5 py-3 text-white focus:border-[#E5A93C] focus:outline-none"
+                placeholder="e.g. MCP-MTR-100001"
               />
             </div>
 
@@ -312,7 +328,7 @@ export default function ApplicationWizard() {
                       site: { ...formData.site, lat: parseFloat(e.target.value) || 0 }
                     })
                   }
-                  className="w-full text-xs rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white focus:outline-none"
+                  className="w-full text-sm rounded-xl bg-[#202026] border border-[#2B2B34] px-3.5 py-3 text-white focus:outline-none"
                 />
               </div>
               <div>
@@ -327,7 +343,7 @@ export default function ApplicationWizard() {
                       site: { ...formData.site, lon: parseFloat(e.target.value) || 0 }
                     })
                   }
-                  className="w-full text-xs rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white focus:outline-none"
+                  className="w-full text-sm rounded-xl bg-[#202026] border border-[#2B2B34] px-3.5 py-3 text-white focus:outline-none"
                 />
               </div>
             </div>
@@ -335,7 +351,7 @@ export default function ApplicationWizard() {
         </div>
 
         {/* Section 3: Power Sliders (Electric blue from design inspiration) */}
-        <div className="bg-[#18181C] border border-[#27272E] rounded-2xl p-6 shadow-xl space-y-4">
+        <div className="lg:col-span-12 bg-[#18181C] border border-[#27272E] rounded-2xl p-6 lg:p-7 shadow-xl space-y-5">
           <div className="flex items-center space-x-2 border-b border-[#27272E] pb-3">
             <SunMedium className="w-4 h-4 text-[#E5A93C]" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
@@ -343,7 +359,7 @@ export default function ApplicationWizard() {
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <div className="space-y-2 p-3.5 rounded-xl bg-[#202026] border border-[#2B2B34]">
               <div className="flex justify-between items-center text-xs">
                 <span className="font-semibold text-zinc-400">Solar Panels</span>
@@ -435,14 +451,16 @@ export default function ApplicationWizard() {
         </div>
 
         {/* Section 4: Equipment Devices */}
+        <div className="lg:col-span-12">
         <DeviceArrayBuilder
           devices={formData.devices}
           setDevices={(newDevices) => setFormData({ ...formData, devices: newDevices })}
           errors={errors}
         />
+        </div>
 
         {/* Section 5: Installer */}
-        <div className="bg-[#18181C] border border-[#27272E] rounded-2xl p-6 shadow-xl space-y-4">
+        <div className="lg:col-span-12 bg-[#18181C] border border-[#27272E] rounded-2xl p-6 lg:p-7 shadow-xl space-y-5">
           <div className="flex items-center space-x-2 border-b border-[#27272E] pb-3">
             <Wrench className="w-4 h-4 text-[#E5A93C]" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
@@ -464,8 +482,8 @@ export default function ApplicationWizard() {
                     installer: { ...formData.installer, licenseNo: e.target.value }
                   })
                 }
-                className="w-full text-xs font-mono rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white focus:border-[#E5A93C] focus:outline-none"
-                placeholder="e.g. LIC-ENBW-EXP-5521"
+                className="w-full text-sm font-mono rounded-xl bg-[#202026] border border-[#2B2B34] px-3.5 py-3 text-white focus:border-[#E5A93C] focus:outline-none"
+                placeholder="e.g. LIC-3321 or LIC-4410"
               />
             </div>
 
@@ -484,10 +502,10 @@ export default function ApplicationWizard() {
         </div>
 
         {/* Submit Actions */}
-        <div className="flex items-center justify-end space-x-3 pt-2">
+        <div className="lg:col-span-12 flex items-center justify-end space-x-3 pt-2">
           <button
             type="button"
-            onClick={() => setFormData(INITIAL_FORM)}
+            onClick={() => setFormData(makeInitialForm())}
             className="px-5 py-2.5 rounded-xl border border-[#27272E] text-zinc-400 hover:bg-[#202026] text-xs font-bold transition-colors"
           >
             Clear Form

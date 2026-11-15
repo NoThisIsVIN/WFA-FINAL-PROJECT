@@ -36,8 +36,26 @@ export default function TasklistInbox() {
     if (!selectedAppId) return;
     setLoading(true);
     try {
-      const items = await api.getApplicationInbox(selectedAppId);
-      setInboxItems(items || []);
+      const [items, status] = await Promise.all([
+        api.getApplicationInbox(selectedAppId),
+        api.getApplicationStatus(selectedAppId).catch(() => null)
+      ]);
+      const list = [...(items || [])];
+      // The contract is signed through the e-sign webhook, not an inbox request: offer it
+      // while the smart-meter child process waits at its event gateway (signed / declined / timeout).
+      const childActive = status?.child?.activeElementIds || [];
+      const waitingForSignature = childActive.some((e) => e === 'S_Wait' || e === 'S_Signed');
+      if (waitingForSignature && !list.some((i) => (i.requestType || '').includes('CONTRACT') && !i.answered)) {
+        list.unshift({
+          itemId: `CONTRACT-${selectedAppId}`,
+          applicationId: selectedAppId,
+          requestType: 'CONTRACT_SIGN',
+          payload: { tariff: status?.variables?.tariff || null },
+          createdAt: status?.child?.startDate || new Date().toISOString(),
+          answered: false
+        });
+      }
+      setInboxItems(list);
     } catch (err) {
       console.warn('Inbox fetch error:', err.message);
     } finally {
@@ -189,6 +207,7 @@ export default function TasklistInbox() {
             return (
               <div
                 key={item.itemId}
+                data-stagger
                 className={`p-5 rounded-2xl border transition-all duration-200 bg-[#18181C] shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 ${
                   isPending
                     ? 'border-[#E5A93C]/50 hover:border-[#E5A93C]'

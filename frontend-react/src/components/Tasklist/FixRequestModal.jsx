@@ -12,7 +12,7 @@ export default function FixRequestModal({ item, applicationId, onClose, onComple
     installer: { licenseNo: '' }
   });
 
-  const missingFields = item?.payload?.missingFields || [];
+  const missingFields = item?.payload?.missing || item?.payload?.missingFields || [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +31,7 @@ export default function FixRequestModal({ item, applicationId, onClose, onComple
         payload.installer = { licenseNo: fixData.installer.licenseNo };
       }
       if (Object.keys(payload).length === 0) {
-        payload.installer = { licenseNo: 'CERT-INST-CORRECTED-2026' };
+        payload.installer = { licenseNo: 'LIC-4410' };
       }
 
       await api.submitFix(applicationId, payload);
@@ -120,7 +120,7 @@ export default function FixRequestModal({ item, applicationId, onClose, onComple
                   installer: { ...fixData.installer, licenseNo: e.target.value }
                 })
               }
-              placeholder="e.g. LIC-ENBW-MASTER-882"
+              placeholder="e.g. LIC-4410"
               className="w-full text-xs font-mono rounded-xl bg-[#202026] border border-[#2B2B34] p-2.5 text-white focus:outline-none focus:border-[#E5A93C]"
             />
           </div>

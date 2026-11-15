@@ -16,7 +16,7 @@ let applications = [
       classification: 'Residential Solar',
       gridLoadStatus: 'Safe Substation Load',
       approval: 'In Review',
-      tariff: 'EEG Guaranteed 8.2¢/kWh',
+      tariff: 'FIT-S-26 ₹3.1/kWh',
       exportLimitKw: 6.0,
       inspectionResults: [
         { serialNumber: 'INV-SMA-2026-9901', type: 'INVERTER', outcome: 'PASS', insulationMOhm: 25.4 },
@@ -49,7 +49,7 @@ let applications = [
         requestType: 'CONTRACT_SIGN',
         payload: {
           meterType: 'Bidirectional Smart Meter',
-          feedInTariff: '8.2 Cent/kWh',
+          feedInTariff: '₹3.1/kWh',
           guaranteeYears: 20
         },
         createdAt: new Date(Date.now() - 900000).toISOString(),
@@ -95,7 +95,7 @@ let applications = [
         payload: {
           substationId: 'SUB-STUTTGART-02',
           estimatedCost: 6500,
-          currency: 'EUR',
+          currency: 'INR',
           description: 'Transformer Capacity Upgrade (100kVA -> 250kVA)'
         },
         createdAt: new Date(Date.now() - 3600000).toISOString(),
@@ -116,7 +116,7 @@ let applications = [
       classification: 'Commercial Factory',
       gridLoadStatus: 'Upgrade Completed',
       approval: 'Approved & Connected',
-      certificate: 'CERT-ENBW-2026-9948',
+      certificate: 'MCP-CERT-APP-2026-0003',
       tariff: 'Commercial Feed-in Schedule',
       exportLimitKw: 75.0
     },
@@ -267,7 +267,7 @@ export async function handleMockApi(req, res) {
         classification: body.applicant?.type === 'FACTORY' ? 'Commercial Factory' : 'Residential Solar',
         gridLoadStatus: 'Safe Substation Load',
         approval: 'In Review',
-        tariff: 'EEG Guaranteed 8.2¢/kWh',
+        tariff: 'FIT-S-26 ₹3.1/kWh',
         exportLimitKw: body.system?.inverterKw || 5.0
       },
       activeElements: [
@@ -405,7 +405,7 @@ export async function handleMockApi(req, res) {
         }
       });
       app.variables.approval = 'Approved & Connected';
-      app.variables.certificate = `CERT-ENBW-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      app.variables.certificate = `MCP-CERT-${Math.floor(1000 + Math.random() * 9000)}`;
       app.activeElements = [{ elementId: 'A_Cert', elementName: 'Final Approval' }];
     }
     return sendJson(res, 202, {

@@ -7,9 +7,9 @@ export default function CostOfferModal({ item, applicationId, onClose, onComplet
   const { addToast } = useApp();
   const [loading, setLoading] = useState(false);
 
-  const cost = item?.payload?.estimatedCost || 6500;
-  const currency = item?.payload?.currency || 'EUR';
-  const substation = item?.payload?.substationId || 'SUB-STUTTGART-02';
+  const cost = item?.payload?.applicantShareRs ?? item?.payload?.upgradeCostRs ?? 0;
+  const currency = item?.payload?.currency || 'INR';
+  const substation = item?.payload?.substationId || item?.payload?.upgradeOption || 'Transformer upgrade';
 
   const handleDecision = async (accept) => {
     setLoading(true);
@@ -58,7 +58,7 @@ export default function CostOfferModal({ item, applicationId, onClose, onComplet
           <div className="text-3xl font-black text-[#E5A93C] font-mono tracking-tight">
             {cost.toLocaleString()} {currency}
           </div>
-          <p className="text-[10px] text-zinc-400">EnBW Subsidized Grid Infrastructure Expansion</p>
+          <p className="text-[10px] text-zinc-400">Metro City Power grid infrastructure upgrade</p>
         </div>
 
         {/* Action Buttons */}

@@ -26,6 +26,7 @@ export default function Toast() {
         return (
           <div
             key={toast.id}
+            data-toast
             className={`flex items-start justify-between p-3.5 rounded-2xl shadow-2xl border backdrop-blur-xl transition-all duration-300 ${borderClass}`}
           >
             <div className="flex items-start space-x-2.5">

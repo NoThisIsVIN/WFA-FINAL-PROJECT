@@ -236,6 +236,7 @@ public class ApplicationService {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("applicationId", applicationId);
         record.ifPresent(r -> out.put("submittedAt", r.submittedAt().toString()));
+        record.ifPresent(r -> out.put("applicantName", r.applicantName()));
         try {
             Optional<Map<String, Object>> pi = camunda.findMainInstance(applicationId);
             if (pi.isEmpty()) {
@@ -246,6 +247,8 @@ public class ApplicationService {
                 out.put("state", "PENDING"); // message published, instance not exported yet
                 out.put("processInstanceKey", null);
                 out.put("activeElements", List.of());
+                out.put("activeElementIds", List.of());
+                out.put("finishedElementIds", List.of());
                 out.put("finishedElements", List.of());
                 out.put("variables", Map.of());
                 out.put("openIncidents", 0);
@@ -292,6 +295,8 @@ public class ApplicationService {
     private static void putElements(Map<String, Object> target, List<Map<String, Object>> elements) {
         List<String> active = new ArrayList<>();
         List<String> finished = new ArrayList<>();
+        List<String> activeIds = new ArrayList<>();
+        List<String> finishedIds = new ArrayList<>();
         for (Map<String, Object> e : elements) {
             String type = String.valueOf(e.get("type"));
             if ("PROCESS".equals(type) || "MULTI_INSTANCE_BODY".equals(type)) {
@@ -299,14 +304,20 @@ public class ApplicationService {
             }
             Object name = e.get("elementName");
             String label = name == null || name.toString().isBlank() ? String.valueOf(e.get("elementId")) : name.toString();
+            String id = String.valueOf(e.get("elementId"));
             if ("ACTIVE".equals(e.get("state"))) {
                 active.add(label);
+                activeIds.add(id);
             } else {
                 finished.add(label);
+                finishedIds.add(id);
             }
         }
         target.put("activeElements", active);
         target.put("finishedElements", finished);
+        // BPMN element ids, so the portal's progress chart can match stages (Sub_Intake, Call_SmartMeter, ...)
+        target.put("activeElementIds", activeIds);
+        target.put("finishedElementIds", finishedIds);
     }
 
     /** Objects are merged field by field into what was stored; anything else (devices list) replaces it. */

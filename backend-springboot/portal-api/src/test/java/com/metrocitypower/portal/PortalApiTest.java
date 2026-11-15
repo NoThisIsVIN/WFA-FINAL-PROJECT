@@ -323,6 +323,8 @@ class PortalApiTest {
                 .andExpect(jsonPath("$.activeElements[0]").value("Wait for corrected details"))
                 .andExpect(jsonPath("$.finishedElements[0]").value("Application submitted"))
                 .andExpect(jsonPath("$.finishedElements", hasSize(1)))
+                .andExpect(jsonPath("$.activeElementIds[0]").value("I_WaitFix"))
+                .andExpect(jsonPath("$.finishedElementIds[0]").value("Start_Applied"))
                 .andExpect(jsonPath("$.variables.classification.sizeClass").value("SMALL"))
                 .andExpect(jsonPath("$.variables.gridLoadStatus").value("OK"))
                 .andExpect(jsonPath("$.variables.secret").doesNotExist())

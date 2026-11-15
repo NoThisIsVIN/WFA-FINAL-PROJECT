@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { gsap, useGSAP, prefersReducedMotion } from '../../motion/motion';
 import {
   CheckCircle2,
   Clock,
@@ -47,18 +48,18 @@ const SIMPLE_STAGES = [
     tasks: ['D_Cert', 'D_Book', 'D_Inspect', 'D_Partner', 'D_GetCert']
   },
   {
-    id: 'smart-meter',
-    name: '6. Smart Meter Setup',
-    bpmnElementId: 'Call_SmartMeter',
-    description: 'Installs bidirectional smart meter and prepares tariff agreement.',
-    tasks: ['S_Install', 'S_Send', 'S_Activate']
-  },
-  {
     id: 'approval',
-    name: '7. Final Approval',
+    name: '6. Final Approval',
     bpmnElementId: 'Sub_Approval',
     description: 'Signs off and issues the official grid connection certificate.',
     tasks: ['A_First', 'A_FourEyes', 'A_Cert', 'A_Email', 'A_Portal']
+  },
+  {
+    id: 'smart-meter',
+    name: '7. Smart Meter Setup',
+    bpmnElementId: 'Call_SmartMeter',
+    description: 'Installs bidirectional smart meter and prepares tariff agreement.',
+    tasks: ['S_Install', 'S_Send', 'S_Activate']
   }
 ];
 
@@ -76,8 +77,64 @@ export default function ProcessFlowChart({ activeElements = [], finishedElements
     return stage.tasks.some((t) => finishedIds.includes(t));
   };
 
+  const statusOf = (stage) => (isStageActive(stage) ? 'active' : isStageFinished(stage) ? 'done' : 'todo');
+  const statuses = SIMPLE_STAGES.map(statusOf);
+  const statusKey = statuses.join(',');
+  const doneCount = processState === 'COMPLETED' ? SIMPLE_STAGES.length : statuses.filter((x) => x === 'done').length;
+  const progress = doneCount / SIMPLE_STAGES.length;
+
+  const rootRef = useRef(null);
+  const barRef = useRef(null);
+  const prevStatuses = useRef(null);
+
+  // First paint: cards rise in, progress bar fills from zero.
+  useGSAP(
+    () => {
+      if (prefersReducedMotion()) return;
+      gsap.from('[data-stage]', { y: 22, scale: 0.96, autoAlpha: 0, duration: 0.55, stagger: 0.06, clearProps: 'transform,opacity,visibility' });
+    },
+    { scope: rootRef }
+  );
+
+  // Progress bar follows the engine; a stage that just completed gets a small pop.
+  useGSAP(
+    () => {
+      const reduce = prefersReducedMotion();
+      gsap.to(barRef.current, { scaleX: progress, duration: reduce ? 0 : 1.1, ease: 'power3.inOut' });
+      const prev = prevStatuses.current;
+      if (prev && !reduce) {
+        statuses.forEach((st, i) => {
+          if (st === 'done' && prev[i] !== 'done') {
+            const card = rootRef.current?.querySelector(`[data-stage="${i}"]`);
+            if (card) {
+              gsap.fromTo(card, { scale: 1.06 }, { scale: 1, duration: 0.9, ease: 'elastic.out(1, 0.5)', clearProps: 'transform' });
+              gsap.from(card.querySelector('[data-stage-icon]'), { rotate: -180, scale: 0, duration: 0.6, ease: 'back.out(2)', clearProps: 'transform' });
+            }
+          }
+        });
+      }
+      prevStatuses.current = statuses;
+    },
+    { dependencies: [statusKey, progress], scope: rootRef, revertOnUpdate: false }
+  );
+
+  // The active stage breathes with a soft gold glow; the tween is reverted when the stage changes.
+  useGSAP(
+    () => {
+      if (prefersReducedMotion()) return;
+      gsap.to('[data-stage-active]', {
+        boxShadow: '0 0 0 1px rgba(229,169,60,0.55), 0 0 28px 2px rgba(229,169,60,0.22)',
+        duration: 1.3,
+        ease: 'sine.inOut',
+        repeat: -1,
+        yoyo: true
+      });
+    },
+    { dependencies: [statusKey], scope: rootRef, revertOnUpdate: true }
+  );
+
   return (
-    <div className="bg-[#18181C] border border-[#27272E] rounded-2xl p-6 shadow-xl space-y-4">
+    <div ref={rootRef} className="bg-[#18181C] border border-[#27272E] rounded-2xl p-6 shadow-xl space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#27272E] pb-3">
         <div>
           <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
@@ -105,6 +162,21 @@ export default function ProcessFlowChart({ activeElements = [], finishedElements
         </div>
       </div>
 
+      {/* Overall progress */}
+      <div className="space-y-1.5">
+        <div className="flex justify-between text-[11px] text-zinc-400">
+          <span>{doneCount} of {SIMPLE_STAGES.length} stages complete</span>
+          <span className="font-mono text-zinc-300">{Math.round(progress * 100)}%</span>
+        </div>
+        <div className="h-1.5 w-full rounded-full bg-[#25252C] overflow-hidden">
+          <div
+            ref={barRef}
+            className="h-full w-full origin-left rounded-full bg-gradient-to-r from-[#E5A93C] via-amber-400 to-[#22C55E]"
+            style={{ transform: 'scaleX(0)' }}
+          />
+        </div>
+      </div>
+
       {/* Pipeline Grid with Uniform Card Heights */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
         {SIMPLE_STAGES.map((stage, idx) => {
@@ -118,7 +190,7 @@ export default function ProcessFlowChart({ activeElements = [], finishedElements
           if (active) {
             statusClass = 'border-[#E5A93C] bg-[#202026] text-white shadow-lg ring-1 ring-[#E5A93C]/40';
             badgeText = 'In Progress';
-            badgeClass = 'bg-[#E5A93C] text-black font-extrabold animate-pulse';
+            badgeClass = 'bg-[#E5A93C] text-black font-extrabold';
           } else if (finished) {
             statusClass = 'border-emerald-600/30 bg-emerald-950/10 text-zinc-200';
             badgeText = 'Completed';
@@ -128,7 +200,9 @@ export default function ProcessFlowChart({ activeElements = [], finishedElements
           return (
             <div
               key={stage.id}
-              className={`p-4 rounded-xl border min-h-[148px] transition-all duration-200 flex flex-col justify-between ${statusClass}`}
+              data-stage={idx}
+              {...(active ? { 'data-stage-active': '' } : {})}
+              className={`p-4 rounded-xl border min-h-[148px] transition-[color,background-color,border-color,transform] duration-300 flex flex-col justify-between hover:-translate-y-0.5 hover:border-[#3A3A44] ${statusClass}`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -144,7 +218,7 @@ export default function ProcessFlowChart({ activeElements = [], finishedElements
                   {active ? (
                     <Clock className="w-4 h-4 text-[#E5A93C] animate-spin flex-shrink-0" />
                   ) : finished ? (
-                    <CheckCircle2 className="w-4 h-4 text-[#22C55E] flex-shrink-0" />
+                    <CheckCircle2 data-stage-icon className="w-4 h-4 text-[#22C55E] flex-shrink-0" />
                   ) : (
                     <Circle className="w-4 h-4 text-zinc-600 flex-shrink-0" />
                   )}
