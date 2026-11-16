@@ -193,5 +193,36 @@ export const api = {
     return await request('/ops/faults/reset', {
       method: 'POST'
     });
+  },
+
+  // Staff tasklist (Camunda user tasks)
+  listStaffTasks: async ({ state = 'CREATED', applicationId } = {}) => {
+    const params = new URLSearchParams({ state });
+    if (applicationId) params.set('applicationId', applicationId);
+    return await request(`/staff/tasks?${params.toString()}`, { method: 'GET' });
+  },
+
+  getStaffTaskForm: async (userTaskKey) => {
+    return await request(`/staff/tasks/${encodeURIComponent(userTaskKey)}/form`, { method: 'GET' });
+  },
+
+  claimStaffTask: async (userTaskKey, assignee) => {
+    return await request(`/staff/tasks/${encodeURIComponent(userTaskKey)}/assign`, {
+      method: 'POST',
+      body: JSON.stringify({ assignee })
+    });
+  },
+
+  unclaimStaffTask: async (userTaskKey) => {
+    return await request(`/staff/tasks/${encodeURIComponent(userTaskKey)}/unassign`, {
+      method: 'POST'
+    });
+  },
+
+  completeStaffTask: async (userTaskKey, variables) => {
+    return await request(`/staff/tasks/${encodeURIComponent(userTaskKey)}/complete`, {
+      method: 'POST',
+      body: JSON.stringify({ variables: variables || {} })
+    });
   }
 };

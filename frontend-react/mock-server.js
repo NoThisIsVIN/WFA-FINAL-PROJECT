@@ -1,4 +1,5 @@
 import http from 'http';
+import fs from 'fs';
 
 // In-memory mock store for standalone frontend demo mode
 let applications = [
@@ -197,9 +198,146 @@ function sendJson(res, statusCode, data) {
   res.end(JSON.stringify(data));
 }
 
+
+// ---------------------------------------------------------------- staff tasklist (Camunda user tasks)
+
+// Form schemas come from ../bpmn-models/forms when the repo is checked out; minimal copies otherwise.
+const FALLBACK_FORMS = {
+  'safety-inspection': {
+    id: 'safety-inspection',
+    components: [
+      { type: 'text', text: '### Application {{applicationId}}\n\n**Applicant:** {{applicant.name}} ({{applicant.type}})\n\n**Device:** {{device.serialNumber}} ({{device.type}})\n\n**Checks to do:**\n\n{{#loop checklist}}- {{this}}\n{{/loop}}' },
+      { type: 'radio', key: 'inspectionOutcome', label: 'Inspection result', values: [{ label: 'Pass', value: 'PASS' }, { label: 'Minor issues', value: 'MINOR' }, { label: 'Critical issues', value: 'CRITICAL' }], validate: { required: true } },
+      { type: 'number', key: 'insulationMOhm', label: 'Insulation resistance (MΩ)', validate: { min: 0 } },
+      { type: 'number', key: 'earthOhm', label: 'Earth resistance (Ω)', validate: { min: 0 } },
+      { type: 'textarea', key: 'inspectionNotes', label: 'Inspection notes' }
+    ]
+  },
+  'meter-install': {
+    id: 'meter-install',
+    components: [
+      { type: 'text', text: '### Application {{applicationId}}\n\nInstall the smart meter at the site.\n\n**Current meter ID:** {{site.meterId}}' },
+      { type: 'textfield', key: 'meterSerial', label: 'New smart meter serial number', validate: { required: true } },
+      { type: 'datetime', key: 'meterInstalledOn', subtype: 'date', dateLabel: 'Installed on', validate: { required: true } }
+    ]
+  }
+};
+
+function loadForm(formId) {
+  try {
+    const file = new URL(`../bpmn-models/forms/${formId}.form`, import.meta.url);
+    return JSON.parse(fs.readFileSync(file, 'utf-8'));
+  } catch {
+    return FALLBACK_FORMS[formId] || { id: formId, components: [] };
+  }
+}
+
+let staffTasks = [
+  {
+    userTaskKey: '2251799813690101',
+    name: 'Safety inspection',
+    elementId: 'D_Inspect',
+    state: 'CREATED',
+    processDefinitionId: 'solar-connection-approval',
+    processInstanceKey: '2251799813685250',
+    applicationId: 'APP-2026-0001',
+    assignee: null,
+    candidateGroups: ['field-inspectors'],
+    candidateUsers: [],
+    creationDate: new Date(Date.now() - 1200000).toISOString(),
+    formId: 'safety-inspection',
+    variables: {
+      applicationId: 'APP-2026-0001',
+      applicant: { name: 'Asha Rao', email: 'asha.rao@example.test', type: 'HOME' },
+      site: { address: '12 Lake Road, Metro City', region: 'SOUTH', meterId: 'MTR-55120', substationId: 'SUB-07' },
+      system: { pvKw: 6.5, inverterKw: 5, batteryKwh: 10, batteryKw: 4 },
+      device: { serialNumber: 'INV-MCP-0001', type: 'INVERTER', model: 'SunMax 5K' },
+      checklist: ['Insulation resistance', 'Earthing', 'Anti-islanding trip test']
+    }
+  },
+  {
+    userTaskKey: '2251799813690202',
+    name: 'Install smart meter',
+    elementId: 'S_Install',
+    state: 'CREATED',
+    processDefinitionId: 'smart-meter-contract',
+    processInstanceKey: '2251799813685289',
+    applicationId: 'APP-2026-0001',
+    assignee: 'technician',
+    candidateGroups: ['meter-technicians'],
+    candidateUsers: [],
+    creationDate: new Date(Date.now() - 600000).toISOString(),
+    formId: 'meter-install',
+    variables: {
+      applicationId: 'APP-2026-0001',
+      applicant: { name: 'Asha Rao', email: 'asha.rao@example.test', type: 'HOME' },
+      site: { address: '12 Lake Road, Metro City', region: 'SOUTH', meterId: 'MTR-55120', substationId: 'SUB-07' }
+    }
+  }
+];
+
+function staffTaskView(t) {
+  const { variables, formId, ...view } = t;
+  return { ...view, formKey: `form-${formId}` };
+}
+
+async function handleStaffTasks(req, res, url, method) {
+  const parsed = new URL(url, 'http://mock.local');
+  const path = parsed.pathname;
+
+  if (path === '/api/staff/tasks' && method === 'GET') {
+    const state = (parsed.searchParams.get('state') || 'CREATED').toUpperCase();
+    const appId = parsed.searchParams.get('applicationId');
+    const list = staffTasks
+      .filter((t) => t.state === state)
+      .filter((t) => !appId || t.applicationId === appId)
+      .map(staffTaskView);
+    return sendJson(res, 200, list);
+  }
+
+  const m = path.match(/^\/api\/staff\/tasks\/([^/]+)\/(form|assign|unassign|complete)$/);
+  if (!m) return sendJson(res, 404, { error: 'NOT_FOUND', message: `Endpoint ${path} not found` });
+  const [, key, action] = m;
+  const task = staffTasks.find((t) => t.userTaskKey === key);
+  if (!task) return sendJson(res, 404, { error: 'TASK_NOT_FOUND', message: `No user task ${key}` });
+
+  if (action === 'form' && method === 'GET') {
+    return sendJson(res, 200, {
+      task: staffTaskView(task),
+      form: { formId: task.formId, formKey: `form-${task.formId}`, version: 1, schema: loadForm(task.formId) },
+      variables: task.variables
+    });
+  }
+  if (action === 'assign' && method === 'POST') {
+    const body = await parseJson(req);
+    if (!body.assignee) return sendJson(res, 400, { error: 'ASSIGNEE_REQUIRED', message: 'Body must contain a non-empty assignee' });
+    if (task.assignee && task.assignee !== body.assignee) {
+      return sendJson(res, 409, { error: 'TASK_CONFLICT', message: `Task is already assigned to ${task.assignee}` });
+    }
+    task.assignee = body.assignee;
+    return sendJson(res, 200, { userTaskKey: key, assignee: task.assignee });
+  }
+  if (action === 'unassign' && method === 'POST') {
+    task.assignee = null;
+    return sendJson(res, 200, { userTaskKey: key, assignee: null });
+  }
+  if (action === 'complete' && method === 'POST') {
+    if (task.state !== 'CREATED') return sendJson(res, 409, { error: 'TASK_CONFLICT', message: 'Task is not open' });
+    const body = await parseJson(req);
+    task.state = 'COMPLETED';
+    Object.assign(task.variables, body.variables || {});
+    return sendJson(res, 200, { userTaskKey: key, completed: true, variables: body.variables || {} });
+  }
+  return sendJson(res, 405, { error: 'METHOD_NOT_ALLOWED', message: `${method} ${path}` });
+}
+
 export async function handleMockApi(req, res) {
   const url = req.url || '';
   const method = req.method || 'GET';
+
+  if (url.startsWith('/api/staff/tasks')) {
+    return handleStaffTasks(req, res, url, method);
+  }
 
   // Health
   if (url === '/health' || url === '/api/health') {

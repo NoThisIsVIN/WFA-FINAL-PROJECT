@@ -205,7 +205,7 @@ Every "closed" end inside a stage throws error `CASE_CLOSED`; a boundary event o
 | Device certificate invalid | Error `CERT_INVALID` (`D_BCert`) | Connection desk gets a valid certificate |
 | No inspector free | Error `NO_INSPECTOR` (`D_BBook`) | Partner inspector or video check |
 | Inspection overdue | Non-interrupting timer `D_BOver` | Escalation "Inspection overdue" to supervisor |
-| Minor / critical defect | Gateway on `inspectionOutcome` | Minor: one fix round (message `defect-fixed`); critical: case closed |
+| Minor / critical defect | Gateway on `inspectionResult.outcome` | Minor: one fix round (message `defect-fixed`); critical: case closed |
 | Some devices failed | Script `allPassed` false | Compliance: continue with fewer devices or reject |
 | Manual approval, same person twice | Gateway `secondApproverId = firstApproverId` | Reassign the second review (four eyes) |
 | Certificate email fails | Error `EMAIL_FAILED` (`A_BEmail`) | Portal inbox + manual post |
@@ -274,6 +274,11 @@ These are **demo-only values** for a local, synthetic setup. `start-all.ps1` set
 | `GET /api/ops/summary` | Counts of cases, incidents, open tasks, alerts | searches |
 | `GET /api/ops/alerts` | Ops alerts | – |
 | `GET /api/ops/faults`, `POST /api/ops/faults`, `POST /api/ops/faults/reset` | Read / set / reset mock fault modes | mock `/admin/faults` |
+| `GET /api/staff/tasks?state=CREATED&applicationId=` | Staff tasklist: open user tasks with `applicationId` (child smart-meter tasks map to the parent case), assignee, candidate groups | `POST /v2/user-tasks/search` |
+| `GET /api/staff/tasks/{key}/form` | Task, its form-js schema and the variables it can see | `GET /v2/user-tasks/{key}`, `GET /v2/user-tasks/{key}/form`, variable searches |
+| `POST /api/staff/tasks/{key}/assign` | Claim a task `{assignee}`; 409 if someone else holds it | `POST /v2/user-tasks/{key}/assignment` |
+| `POST /api/staff/tasks/{key}/unassign` | Release a claimed task | `DELETE /v2/user-tasks/{key}/assignee` |
+| `POST /api/staff/tasks/{key}/complete` | Complete a task with the form values `{variables}` | `POST /v2/user-tasks/{key}/completion` |
 | `GET /api/system/status`, `POST /api/system/connect` | Health of portal-api, Camunda, connectors, mocks | probes |
 | `POST /internal/inbox` | Worker `portal-request` posts an inbox item | – |
 | `POST /internal/ops-alerts` | Worker `ops-alert` posts an alert | – |
@@ -291,7 +296,7 @@ Real expressions taken from the BPMN and DMN files.
 | `hasBattery: system.batteryKwh != null and system.batteryKwh > 0` | `Task_Setup` script | The case has a battery if a positive kWh value was given |
 | `if useMockWeather = true then "http://localhost:8091/weather/forecast" else "https://api.open-meteo.com/v1/forecast"` | `Task_Setup` script (`config.weatherUrl`) | Choose the mock or the public weather API |
 | `=config.installerUrl + "/" + installer.licenseNo` | `I_Installer` input `url` | Build the registry URL for the installer licence |
-| `if error != null and error.code = "404" then bpmnError("INSTALLER_NOT_FOUND", ...) else if error = null and list contains(["EXPIRED", "SUSPENDED"], response.body.status) then bpmnError(...) else null` | `I_Installer` errorExpression | Turn a 404 or an expired/suspended licence into a BPMN error |
+| `if error != null and error.code = "404" then bpmnError("INSTALLER_NOT_FOUND", ...) else if error = null and installerCheck != null and list contains(["EXPIRED", "SUSPENDED"], installerCheck.status) then bpmnError(...) else null` | `I_Installer` errorExpression | Turn a 404 or an expired/suspended licence into a BPMN error |
 | `=validation != null and validation.complete = true` | Flow `Flow_I_Complete_I_EndOk` | Application is complete |
 | `=fixRound < 2` | Flow `Flow_I_Rounds_I_SendFix` | Allow at most two fix requests |
 | `=fixRound + 1` | `I_SendFix` output `fixRound` | Count the fix rounds |
@@ -334,9 +339,9 @@ Real expressions taken from the BPMN and DMN files.
 |---|---|---|
 | `=devices` (element `device`, output `inspectionResults`, `=inspectionResult`) | `Sub_Inspections` multi-instance | One parallel inspection per device, results collected in a list |
 | `=config.certUrl + "/" + device.certificateId` | `D_Cert` input `url` | Look up this device's certificate |
-| `list contains(["EXPIRED", "REVOKED"], response.body.status)` | `D_Cert` errorExpression | Expired or revoked certificate raises `CERT_INVALID` |
+| `certificateCheck != null and list contains(["EXPIRED", "REVOKED"], certificateCheck.status)` | `D_Cert` errorExpression | Expired or revoked certificate raises `CERT_INVALID` |
 | `={serialNumber: device.serialNumber, type: device.type, outcome: inspectionOutcome, insulationMOhm: insulationMOhm, earthOhm: earthOhm, notes: inspectionNotes}` | `D_Inspect` output `inspectionResult` | Store the form result for this device |
-| `=inspectionOutcome = "MINOR"` / `= "CRITICAL"` | Flows after "Result?" | Route minor and critical defects |
+| `=inspectionResult != null and inspectionResult.outcome = "MINOR"` / `"CRITICAL"` | Flows after "Result?" | Route minor and critical defects |
 | `=applicationId + ":" + device.serialNumber` | Correlation key of `defect-fixed` | Target the right device instance |
 
 ### Approval and certificate
@@ -507,8 +512,8 @@ npm --prefix frontend-react run dev      # or: run build
 
 ## 19. Team
 
-| Member | Area |
-|---|---|
-| Student 1 (name, register no.) | BPMN and DMN models, forms, FEEL |
-| Student 2 (name, register no.) | Spring Boot services (portal-api, process-workers, mock-services, tests) |
-| Student 3 (name, register no.) | React portal |
+| Register no. | Name | Section | Area |
+|---|---|---|---|
+| RA2411003010429 | Vinesh Reddy | G1 | BPMN and DMN models, forms, FEEL; Spring Boot backend (portal-api, process-workers, mock-services, tests); Docker |
+| RA2411003010398 | Harish Neralla | G1 | React portal (application wizard, live status tracker, action inbox, ops console) |
+| RA2411003010621 | Tarakeshwar B | J1 | React portal (frontend) |

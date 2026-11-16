@@ -8,6 +8,7 @@ import ApplicationList from './components/Application/ApplicationList';
 import LiveProcessTracker from './components/ProcessTracker/LiveProcessTracker';
 import TasklistInbox from './components/Tasklist/TasklistInbox';
 import OpsConsole from './components/Ops/OpsConsole';
+import StaffTasklist from './components/StaffTasks/StaffTasklist';
 import MotionLayer from './motion/MotionLayer';
 import AmbientBackground from './motion/AmbientBackground';
 import { gsap, useGSAP, prefersReducedMotion } from './motion/motion';
@@ -46,6 +47,7 @@ export default function App() {
           {activeTab === 'applications' && <ApplicationList />}
           {activeTab === 'tracker' && <LiveProcessTracker />}
           {activeTab === 'inbox' && <TasklistInbox />}
+          {activeTab === 'staff' && <StaffTasklist />}
           {activeTab === 'ops' && <OpsConsole />}
         </main>
 

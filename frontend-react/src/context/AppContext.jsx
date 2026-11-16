@@ -4,7 +4,7 @@ import { api } from '../api/client';
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  // apply | applications | tracker | inbox | ops
+  // apply | applications | tracker | inbox | staff | ops
   const [activeTab, setActiveTab] = useState('apply');
   const [selectedAppId, setSelectedAppId] = useState(null);
   const [applications, setApplications] = useState([]);

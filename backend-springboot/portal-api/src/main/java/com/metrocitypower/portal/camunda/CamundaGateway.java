@@ -2,6 +2,7 @@ package com.metrocitypower.portal.camunda;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
@@ -36,20 +37,29 @@ public class CamundaGateway {
     private final RestClient rest;
     private final ObjectMapper mapper;
 
+    @Autowired
     public CamundaGateway(@Value("${camunda.url:http://localhost:8080}") String url,
                           @Value("${camunda.user:demo}") String user,
                           @Value("${camunda.password:demo}") String password,
                           ObjectMapper mapper) {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(Duration.ofSeconds(3));
-        factory.setReadTimeout(Duration.ofSeconds(15));
+        this(RestClient.builder().requestFactory(timeouts()), url, user, password, mapper);
+    }
+
+    /** Builder-based constructor (tests bind a MockRestServiceServer to the builder). */
+    public CamundaGateway(RestClient.Builder builder, String url, String user, String password, ObjectMapper mapper) {
         String base = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
-        this.rest = RestClient.builder()
+        this.rest = builder
                 .baseUrl(base + "/v2")
-                .requestFactory(factory)
                 .defaultHeaders(h -> h.setBasicAuth(user, password))
                 .build();
         this.mapper = mapper;
+    }
+
+    private static SimpleClientHttpRequestFactory timeouts() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(3));
+        factory.setReadTimeout(Duration.ofSeconds(15));
+        return factory;
     }
 
     // ---------------------------------------------------------------- commands
@@ -177,6 +187,100 @@ public class CamundaGateway {
         return items(search("/user-tasks/search", query(Map.of("state", "CREATED"), null, null, MAX_PAGE)));
     }
 
+    // ---------------------------------------------------------------- user tasks (staff tasklist)
+
+    /**
+     * POST /v2/user-tasks/search. state / assignee null = no filter.
+     * Oldest first (creationDate ASC), up to 1000.
+     */
+    public List<Map<String, Object>> searchUserTasks(String state, String assignee) {
+        Map<String, Object> filter = new LinkedHashMap<>();
+        if (state != null && !state.isBlank()) {
+            filter.put("state", state);
+        }
+        if (assignee != null && !assignee.isBlank()) {
+            filter.put("assignee", assignee);
+        }
+        return items(search("/user-tasks/search", query(filter, "creationDate", "ASC", MAX_PAGE)));
+    }
+
+    /** GET /v2/user-tasks/{key}. */
+    public Map<String, Object> userTask(String userTaskKey) {
+        try {
+            Map<String, Object> body = rest.get().uri("/user-tasks/{key}", userTaskKey).retrieve().body(MAP);
+            return body == null ? Map.of() : body;
+        } catch (RestClientException e) {
+            throw fail("get user task " + userTaskKey, e);
+        }
+    }
+
+    /**
+     * GET /v2/user-tasks/{key}/form: {formKey, bpmnId, version, schema (JSON text)}.
+     * Empty when the task has no linked form (Camunda answers 204).
+     */
+    public Optional<Map<String, Object>> userTaskForm(String userTaskKey) {
+        try {
+            Map<String, Object> body = rest.get().uri("/user-tasks/{key}/form", userTaskKey).retrieve().body(MAP);
+            return body == null || body.isEmpty() ? Optional.empty() : Optional.of(body);
+        } catch (RestClientException e) {
+            throw fail("get form of user task " + userTaskKey, e);
+        }
+    }
+
+    /** POST /v2/user-tasks/{key}/variables/search: variables visible to the task, values parsed. */
+    public Map<String, Object> userTaskVariables(String userTaskKey) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        Map<String, Object> page = search("/user-tasks/" + userTaskKey + "/variables/search",
+                query(Map.of(), null, null, MAX_PAGE));
+        for (Map<String, Object> v : items(page)) {
+            String raw = str(v.get("value"));
+            if (Boolean.TRUE.equals(v.get("isTruncated")) && v.get("variableKey") != null) {
+                raw = fullValue(str(v.get("variableKey")), raw);
+            }
+            result.put(str(v.get("name")), parseValue(raw));
+        }
+        return result;
+    }
+
+    /** GET /v2/process-instances/{key} (carries parentProcessInstanceKey for call-activity children). */
+    public Optional<Map<String, Object>> processInstance(String processInstanceKey) {
+        try {
+            return Optional.ofNullable(rest.get().uri("/process-instances/{key}", processInstanceKey)
+                    .retrieve().body(MAP));
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().value() == 404) {
+                return Optional.empty();
+            }
+            throw fail("get process instance " + processInstanceKey, e);
+        } catch (RestClientException e) {
+            throw fail("get process instance " + processInstanceKey, e);
+        }
+    }
+
+    /** POST /v2/user-tasks/{key}/assignment; allowOverride=false so claiming someone else's task is a 409. */
+    public void assignUserTask(String userTaskKey, String assignee, boolean allowOverride) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("assignee", assignee);
+        body.put("allowOverride", allowOverride);
+        command("/user-tasks/" + userTaskKey + "/assignment", body, "assign user task " + userTaskKey);
+    }
+
+    /** DELETE /v2/user-tasks/{key}/assignee. */
+    public void unassignUserTask(String userTaskKey) {
+        try {
+            rest.delete().uri("/user-tasks/{key}/assignee", userTaskKey).retrieve().toBodilessEntity();
+        } catch (RestClientException e) {
+            throw fail("unassign user task " + userTaskKey, e);
+        }
+    }
+
+    /** POST /v2/user-tasks/{key}/completion with the form's variables. */
+    public void completeUserTask(String userTaskKey, Map<String, Object> variables) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("variables", variables == null ? Map.of() : variables);
+        command("/user-tasks/" + userTaskKey + "/completion", body, "complete user task " + userTaskKey);
+    }
+
     /** Does GET /v2/topology answer? */
     public boolean isReachable() {
         try {
@@ -220,6 +324,14 @@ public class CamundaGateway {
         }
     }
 
+    private void command(String path, Map<String, Object> body, String what) {
+        try {
+            rest.post().uri(path).contentType(MediaType.APPLICATION_JSON).body(body).retrieve().toBodilessEntity();
+        } catch (RestClientException e) {
+            throw fail(what, e);
+        }
+    }
+
     private static Map<String, Object> query(Map<String, Object> filter, String sortField, String order, int limit) {
         Map<String, Object> q = new LinkedHashMap<>();
         q.put("filter", filter);
@@ -257,9 +369,10 @@ public class CamundaGateway {
     }
 
     private static CamundaException fail(String what, RestClientException e) {
+        int status = e instanceof RestClientResponseException r ? r.getStatusCode().value() : 0;
         String detail = e instanceof RestClientResponseException r
-                ? r.getStatusCode().value() + " " + r.getResponseBodyAsString()
+                ? status + " " + r.getResponseBodyAsString()
                 : e.getMessage();
-        return new CamundaException("Camunda " + what + " failed: " + detail, e);
+        return new CamundaException("Camunda " + what + " failed: " + detail, e, status);
     }
 }

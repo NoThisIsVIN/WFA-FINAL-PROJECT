@@ -14,7 +14,8 @@ import {
   XCircle,
   Loader2,
   ChevronDown,
-  Server
+  Server,
+  ClipboardCheck
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -140,6 +141,7 @@ export default function Navbar() {
     { id: 'applications', label: 'All Applications', icon: Layers, count: applications.length },
     { id: 'tracker', label: 'Track Status', icon: Activity },
     { id: 'inbox', label: 'Action Required', icon: Inbox },
+    { id: 'staff', label: 'Staff Tasks', icon: ClipboardCheck },
     { id: 'ops', label: 'Grid Admin', icon: Settings }
   ];
 
