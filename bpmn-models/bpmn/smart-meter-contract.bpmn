@@ -82,6 +82,10 @@
     <bpmn:sequenceFlow id="Flow_S_Timeout_S_EndExpired" sourceRef="S_Timeout" targetRef="S_EndExpired" />
     <bpmn:sequenceFlow id="Flow_S_Join_S_Activate" sourceRef="S_Join" targetRef="S_Activate" />
     <bpmn:sequenceFlow id="Flow_S_Activate_S_End" sourceRef="S_Activate" targetRef="S_End" />
+    <bpmn:textAnnotation id="Note_S_Tariff"><bpmn:text>Rate per kWh picked by system size and date</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_S_Fork"><bpmn:text>Parallel: meter install and e-sign happen at the same time</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_S_Wait"><bpmn:text>Event gateway: whichever comes first wins (signed, declined or timeout)</bpmn:text></bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Note_S_Join"><bpmn:text>Waits until BOTH are done</bpmn:text></bpmn:textAnnotation>
     <bpmn:textAnnotation id="Note_Meter"><bpmn:text>Q25 call activity target: Smart Meter Installation &amp; Feed-in Tariff Contract.
 Meter installation and contract signing run in parallel. The signed contract comes back through a webhook (HMAC checked).
 Not signed in time -&gt; error CONTRACT_EXPIRED to the parent.  Declined -&gt; error CONTRACT_DECLINED, the parent connects without selling power.</bpmn:text></bpmn:textAnnotation>
@@ -106,7 +110,11 @@ Not signed in time -&gt; error CONTRACT_EXPIRED to the parent.  Declined -&gt; e
       <bpmndi:BPMNShape id="S_Join_di" bpmnElement="S_Join" bioc:stroke="#37474f" bioc:fill="#ffffff" color:background-color="#ffffff" color:border-color="#37474f"><dc:Bounds x="1245" y="315" width="50" height="50" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="S_Activate_di" bpmnElement="S_Activate" bioc:stroke="#1565c0" bioc:fill="#e3f2fd" color:background-color="#e3f2fd" color:border-color="#1565c0"><dc:Bounds x="1370" y="300" width="100" height="80" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="S_End_di" bpmnElement="S_End" bioc:stroke="#2e7d32" bioc:fill="#e8f5e9" color:background-color="#e8f5e9" color:border-color="#2e7d32"><dc:Bounds x="1552" y="322" width="36" height="36" /><bpmndi:BPMNLabel color:color="#2e7d32"><dc:Bounds x="1520" y="362" width="100" height="27" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Note_Meter_di" bpmnElement="Note_Meter" bioc:stroke="#78909c" color:border-color="#78909c"><dc:Bounds x="180" y="780" width="620" height="90" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_S_Tariff_di" bpmnElement="Note_S_Tariff" bioc:stroke="#78909c" color:border-color="#78909c"><dc:Bounds x="290" y="225" width="170" height="40" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_S_Fork_di" bpmnElement="Note_S_Fork" bioc:stroke="#78909c" color:border-color="#78909c"><dc:Bounds x="370" y="405" width="140" height="55" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_S_Wait_di" bpmnElement="Note_S_Wait" bioc:stroke="#78909c" color:border-color="#78909c"><dc:Bounds x="590" y="560" width="210" height="55" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_S_Join_di" bpmnElement="Note_S_Join" bioc:stroke="#78909c" color:border-color="#78909c"><dc:Bounds x="1290" y="245" width="180" height="30" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Note_Meter_di" bpmnElement="Note_Meter" bioc:stroke="#78909c" color:border-color="#78909c"><dc:Bounds x="180" y="780" width="780" height="70" /></bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_S_Start_S_Tariff_di" bpmnElement="Flow_S_Start_S_Tariff"><di:waypoint x="238" y="340" /><di:waypoint x="320" y="340" /></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_S_Tariff_S_Fork_di" bpmnElement="Flow_S_Tariff_S_Fork"><di:waypoint x="420" y="340" /><di:waypoint x="495" y="340" /></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_S_Fork_S_Install_di" bpmnElement="Flow_S_Fork_S_Install"><di:waypoint x="520" y="315" /><di:waypoint x="520" y="220" /><di:waypoint x="620" y="220" /></bpmndi:BPMNEdge>
