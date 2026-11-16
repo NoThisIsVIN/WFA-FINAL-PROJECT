@@ -40,6 +40,20 @@ function tariffLabel(t) {
   return `₹${t.ratePerKwhRs} / kWh (${t.tariffCode})`;
 }
 
+// Badge from the end event the case actually reached (a COMPLETED instance can be withdrawn or closed).
+const GREEN = 'bg-[#22C55E] text-black font-extrabold';
+const GREY = 'bg-zinc-700 text-zinc-300';
+function caseOutcome(s) {
+  if (s.state === 'ACTIVE') return { label: 'Under Review', className: 'bg-[#E5A93C] text-black font-extrabold animate-pulse' };
+  if (s.state !== 'COMPLETED') return { label: 'Closed', className: GREY };
+  const done = s.finishedElementIds || [];
+  if (done.includes('W_End')) return { label: 'Withdrawn', className: GREY };
+  if (done.includes('End_NoExport')) return { label: 'Connected (no export)', className: GREEN };
+  if (done.includes('End_Connected')) return { label: 'Approved & Connected', className: GREEN };
+  if (done.includes('End_Registered')) return { label: 'Registered', className: GREEN };
+  return { label: 'Closed', className: 'bg-rose-500/20 text-rose-300 border border-rose-500/30' };
+}
+
 export default function LiveProcessTracker() {
   const {
     selectedAppId,
@@ -149,6 +163,7 @@ export default function LiveProcessTracker() {
           </button>
 
           <button
+            hidden={statusData?.state !== 'ACTIVE'}
             onClick={() => setShowWithdrawModal(true)}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-950/30 hover:bg-rose-900/50 text-rose-300 border border-rose-800 transition-colors"
           >
@@ -165,17 +180,14 @@ export default function LiveProcessTracker() {
             <div>
               <div className="flex items-center space-x-3">
                 <h2 className="text-2xl font-black text-white font-mono">{statusData.applicationId}</h2>
-                <span
-                  className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase ${
-                    statusData.state === 'ACTIVE'
-                      ? 'bg-[#E5A93C] text-black font-extrabold animate-pulse'
-                      : statusData.state === 'COMPLETED'
-                      ? 'bg-[#22C55E] text-black font-extrabold'
-                      : 'bg-zinc-700 text-zinc-300'
-                  }`}
-                >
-                  {statusData.state === 'ACTIVE' ? 'Under Review' : statusData.state === 'COMPLETED' ? 'Approved & Connected' : 'Closed'}
-                </span>
+                {(() => {
+                  const outcome = caseOutcome(statusData);
+                  return (
+                    <span className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase ${outcome.className}`}>
+                      {outcome.label}
+                    </span>
+                  );
+                })()}
               </div>
 
               <p className="text-xs text-zinc-400 mt-2">
@@ -231,7 +243,12 @@ export default function LiveProcessTracker() {
       <ProcessFlowChart
         activeElements={statusData?.activeElementIds || statusData?.activeElements || []}
         finishedElements={statusData?.finishedElementIds || statusData?.finishedElements || []}
+        activeNames={statusData?.activeElementIds ? statusData?.activeElements || [] : []}
+        finishedNames={statusData?.finishedElementIds ? statusData?.finishedElements || [] : []}
+        child={statusData?.child || null}
         processState={statusData?.state || 'ACTIVE'}
+        processInstanceKey={statusData?.processInstanceKey || null}
+        closeReason={statusData?.variables?.closeReason || null}
       />
 
       {/* Simplified, High-Value Application Information Cards (Replaces non-working Image 3) */}
@@ -256,7 +273,7 @@ export default function LiveProcessTracker() {
             </div>
             <div className="flex justify-between py-1.5 border-b border-[#27272E]">
               <span className="text-zinc-400">Power Grid Capacity:</span>
-              <span className="font-semibold text-[#22C55E]">{gridLabel(statusData?.variables?.gridLoadStatus)}</span>
+              <span className={`font-semibold ${statusData?.variables?.gridLoadStatus === 'OVERLOAD' ? 'text-[#E5A93C]' : 'text-[#22C55E]'}`}>{gridLabel(statusData?.variables?.gridLoadStatus)}</span>
             </div>
             <div className="flex justify-between py-1.5">
               <span className="text-zinc-400">Approved Feed-In Limit:</span>
@@ -310,9 +327,13 @@ export default function LiveProcessTracker() {
                 Smart Meter Installation & Feed-in Tariff Agreement
               </h4>
             </div>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#E5A93C] text-black">
-              In Progress
-            </span>
+            {statusData.child.state === 'ACTIVE' ? (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#E5A93C] text-black">In Progress</span>
+            ) : (statusData.child.finishedElementIds || []).includes('S_End') ? (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-[#22C55E] border border-emerald-500/30">Contract Active</span>
+            ) : (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-zinc-700 text-zinc-300">Ended</span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">

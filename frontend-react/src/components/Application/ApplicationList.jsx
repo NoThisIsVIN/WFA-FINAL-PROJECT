@@ -31,7 +31,7 @@ export default function ApplicationList() {
       (app.applicantName || '').toLowerCase().includes(searchTerm.toLowerCase());
     if (filterState === 'ALL') return matchesSearch;
     return matchesSearch && (app.state || '').toUpperCase() === filterState;
-  });
+  }).sort((a, b) => (b.applicationId || '').localeCompare(a.applicationId || '')); // newest first
 
   const getStatusBadge = (state, hasIncident) => {
     const s = (state || 'PENDING').toUpperCase();

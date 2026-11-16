@@ -211,7 +211,7 @@ Every "closed" end inside a stage throws error `CASE_CLOSED`; a boundary event o
 | Certificate email fails | Error `EMAIL_FAILED` (`A_BEmail`) | Portal inbox + manual post |
 | Contract declined | Error `CONTRACT_DECLINED` from child (`B_Declined`) | Connect without selling power (zero export) |
 | Contract not signed in time | Error `CONTRACT_EXPIRED` from child (`B_Expired`) | Case closed |
-| **Esp_Withdraw** | Interrupting message event sub-process `application-withdrawn` | Compensate completed work, cancel open bookings (REST), "Withdrawn" |
+| **Esp_Withdraw** | Interrupting message event sub-process `application-withdrawn` | Compensate completed work, cancel open bookings (REST), email confirmation (Email connector), "Withdrawn" |
 | **Esp_Deadline** | Non-interrupting timer event sub-process (day 18 of 20) | Supervisor reviews the delay |
 | **Esp_Error** | Interrupting catch-all error event sub-process | Worker `ops-alert` logs it, ops reviews, case parked |
 | **Esp_Emergency** | Non-interrupting signal event sub-process `grid-emergency` | Pause field work, wait for signal `grid-emergency-lifted`, resume |
@@ -227,7 +227,7 @@ trigger these paths on demand.
 | Connector | Type | Used by |
 |---|---|---|
 | HTTP JSON (REST) | `io.camunda:http-json:1` | Installer check, weather estimate, substation load, reserve capacity, order / cancel transformer, certificate check, book inspector, cancel bookings, pause / resume field work, send e-sign envelope, activate meter |
-| Email (SMTP) | `io.camunda:email:1` | Email certificate, email closure notice (to Mailpit on 127.0.0.1:1025) |
+| Email (SMTP) | `io.camunda:email:1` | Email certificate, email closure notice, email withdrawal confirmation (to Mailpit on 127.0.0.1:1025) |
 | Webhook (inbound) | `io.camunda:webhook:1` | "Signed (webhook)" in `smart-meter-contract`, path `/inbound/mcp-esign-callback`, HMAC SHA-256 on the body, header `X-Signature` |
 
 Connector secrets (c8run reads them from environment variables with the `SECRET_` prefix):
@@ -410,6 +410,8 @@ powershell -ExecutionPolicy Bypass -File bpmn-models\deploy\deploy.ps1
 # stop everything later
 powershell -ExecutionPolicy Bypass -File bpmn-models\deploy\stop-all.ps1
 ```
+
+Shortcut: double-click `start.bat` / `stop.bat` in the repository root to start or stop Mailpit + c8run.
 
 `deploy.ps1` takes `-Only bpmn,dmn,forms` and `-BaseUrl http://localhost:8080`. All files go into one deployment
 because user tasks and business rule tasks use `bindingType="deployment"`. You can also deploy from Camunda
