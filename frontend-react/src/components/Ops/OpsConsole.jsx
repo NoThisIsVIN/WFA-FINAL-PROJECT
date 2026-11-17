@@ -114,9 +114,6 @@ export default function OpsConsole() {
         <div>
           <div className="flex items-center space-x-2">
             <h2 className="text-2xl font-black text-white tracking-tight">Grid Administration & Testing Controls</h2>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#202026] text-[#E5A93C] border border-[#2B2B34]">
-              Evaluator Demo Tools
-            </span>
           </div>
           <p className="text-xs text-zinc-400 mt-1">
             Simulate grid emergencies, trigger automatic transformer delivery, and test failure scenarios.

@@ -26,7 +26,8 @@ energy figures (kW, kWh) are synthetic demo data.
 16. [Run with Docker](#16-run-with-docker)
 17. [Run the demo](#17-run-the-demo)
 18. [Build and test](#18-build-and-test)
-19. [Team](#19-team)
+19. [Screenshots and test evidence](#19-screenshots-and-test-evidence)
+20. [Team](#20-team)
 
 ---
 
@@ -84,6 +85,7 @@ Required by the use case:
 │   ├── decisions/              # 6 DMN files
 │   ├── forms/                  # 18 user task forms
 │   ├── deploy/                 # start-all.ps1, deploy.ps1, stop-all.ps1
+│   ├── diagrams/               # PNG renders of every stage + Operate evidence
 │   ├── .bpmnlintrc, package.json
 │   └── README.md
 ├── backend-springboot/         # Maven aggregator
@@ -91,7 +93,9 @@ Required by the use case:
 │   ├── process-workers/        # job workers (no web port)
 │   ├── portal-api/             # :8090 portal backend (JPA)
 │   └── decision-tests/         # DMN decision table tests
-└── frontend-react/             # Vite + React portal (:5173 in dev, :3000 in Docker)
+├── frontend-react/             # Vite + React portal (:5173 in dev, :3000 in Docker)
+│   └── screenshots/            # portal and Mailpit screenshots
+├── start.bat / stop.bat        # one-click start/stop of c8run + Mailpit
 ```
 
 ## 5. Architecture
@@ -512,10 +516,41 @@ npm --prefix frontend-react install
 npm --prefix frontend-react run dev      # or: run build
 ```
 
-## 19. Team
+## 19. Screenshots and test evidence
+
+**Tests:** 239 automated tests pass (`decision-tests` 118, `portal-api` 51, `mock-services` 42, `process-workers` 28).
+The 30 failure paths (F01-F30, section 8) were run against the live engine: 28 pass fully, F19 and F25 partly.
+
+| Process | |
+|---|---|
+| Main process | ![Main process](bpmn-models/diagrams/solar-connection-approval.png) |
+| Smart meter + contract | ![Smart meter](bpmn-models/diagrams/smart-meter-contract.png) |
+
+Each stage has its own render in [`bpmn-models/diagrams/`](bpmn-models/diagrams) (`stage_*.png`).
+
+| Operate | |
+|---|---|
+| Happy path (parent) | ![](bpmn-models/diagrams/operate_happy_parent.png) |
+| Happy path (child) | ![](bpmn-models/diagrams/operate_happy_child.png) |
+| F05b expired installer | ![](bpmn-models/diagrams/operate_installer_F05b.png) |
+| F20 minor defect | ![](bpmn-models/diagrams/operate_minor_F20.png) |
+| F21 critical defect | ![](bpmn-models/diagrams/operate_critical_F21.png) |
+
+| Portal and email | |
+|---|---|
+| Apply | ![](frontend-react/screenshots/portal_apply.png) |
+| Applications | ![](frontend-react/screenshots/portal_applications.png) |
+| Status tracker | ![](frontend-react/screenshots/portal_tracker.png) |
+| Action inbox | ![](frontend-react/screenshots/portal_inbox.png) |
+| Staff tasks | ![](frontend-react/screenshots/portal_staff.png) |
+| Grid admin | ![](frontend-react/screenshots/portal_ops.png) |
+| Mailpit inbox | ![](frontend-react/screenshots/mailpit_inbox.png) |
+| Certificate email | ![](frontend-react/screenshots/mailpit_certificate.png) |
+
+## 20. Team
 
 | Register no. | Name | Section | Area |
 |---|---|---|---|
 | RA2411003010429 | Vinesh Reddy | G1 | BPMN and DMN models, forms, FEEL; Spring Boot backend (portal-api, process-workers, mock-services, tests); Docker |
 | RA2411003010398 | Harish Neralla | G1 | React portal (application wizard, live status tracker, action inbox, ops console) |
-| RA2411003010621 | Tarakeshwar B | J1 | React portal (frontend) |
+| RA2411003010621 | Tarakeshwar B | J1 | React portal: staff tasklist and form renderer, UI testing; failure-path testing (F01-F30) against the live engine |

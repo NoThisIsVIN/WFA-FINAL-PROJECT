@@ -24,8 +24,12 @@ const STAFF = [
   { id: 'engineer', label: 'Grid engineer', group: 'grid-engineers' },
   { id: 'compliance', label: 'Compliance officer', group: 'compliance' },
   { id: 'desk', label: 'Connection desk', group: 'connection-desk' },
-  { id: 'technician', label: 'Meter technician', group: 'meter-technicians' }
+  { id: 'technician', label: 'Meter technician', group: 'meter-technicians' },
+  { id: 'supervisor', label: 'Supervisor', group: 'supervisors' },
+  { id: 'ops', label: 'Ops', group: 'ops' }
 ];
+// Each new task goes straight to the staff member of its candidate group (no manual claim needed).
+const ownerOf = (t) => STAFF.find((s) => (t.candidateGroups || []).includes(s.group))?.id || null;
 
 const POLL_MS = 5000;
 const OVERRIDE_MS = 15000; // keep local claim/complete results while Camunda's search index catches up
@@ -75,6 +79,7 @@ export default function StaffTasklist() {
   // Local results the search API may not reflect yet: {key: {assignee, at}} and {key: at}.
   const assigneeOverrides = useRef({});
   const completedAt = useRef({});
+  const autoTried = useRef(new Set());
 
   useEffect(() => {
     try {
@@ -105,6 +110,15 @@ export default function StaffTasklist() {
         });
       setTasks(merged);
       setListError(null);
+      // Auto-assign unassigned tasks to their role.
+      merged.filter((t) => !t.assignee && ownerOf(t) && !autoTried.current.has(t.userTaskKey)).forEach((t) => {
+        autoTried.current.add(t.userTaskKey);
+        const who = ownerOf(t);
+        api.claimStaffTask(t.userTaskKey, who).then(() => {
+          assigneeOverrides.current[t.userTaskKey] = { assignee: who, at: Date.now() };
+          setTasks((prev) => prev.map((x) => (x.userTaskKey === t.userTaskKey ? { ...x, assignee: who } : x)));
+        }).catch(() => { /* someone else claimed it */ });
+      });
     } catch (err) {
       setListError(err.message);
     } finally {
@@ -261,27 +275,11 @@ export default function StaffTasklist() {
             </span>
           </div>
           <p className="text-xs text-zinc-400 mt-1">
-            Claim an open task, fill in its form and complete it. The process moves on as soon as Camunda accepts the result.
+            New tasks are assigned to their role automatically. Pick a role, open a task, fill in its form and complete it.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-1.5 bg-[#202026] border border-[#2B2B34] h-9 px-2.5 rounded-xl text-xs">
-            <User className="w-3.5 h-3.5 text-[#E5A93C]" />
-            <span className="text-zinc-500 text-[11px]">Working as</span>
-            <select
-              value={staff}
-              onChange={(e) => setStaff(e.target.value)}
-              className="bg-transparent text-white font-bold focus:outline-none cursor-pointer text-xs"
-            >
-              {STAFF.map((s) => (
-                <option key={s.id} value={s.id} className="bg-[#18181C]">
-                  {s.id} ({s.label})
-                </option>
-              ))}
-            </select>
-          </label>
-
           <label className="flex items-center gap-1.5 bg-[#202026] border border-[#2B2B34] h-9 px-2.5 rounded-xl text-xs">
             <Hash className="w-3.5 h-3.5 text-zinc-500" />
             <select
@@ -305,6 +303,27 @@ export default function StaffTasklist() {
             <span>Refresh</span>
           </button>
         </div>
+      </div>
+
+      {/* Role tabs */}
+      <div className="flex flex-wrap items-center gap-1.5 bg-[#18181C] border border-[#27272E] rounded-2xl p-1.5">
+        {STAFF.map((s) => {
+          const n = tasks.filter((t) => t.assignee === s.id || (!t.assignee && ownerOf(t) === s.id)).length;
+          const active = staff === s.id;
+          return (
+            <button
+              key={s.id}
+              onClick={() => { setStaff(s.id); setScope('mine'); setSelectedKey(null); }}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                active ? 'bg-[#E5A93C] text-black shadow-lg shadow-[#E5A93C]/20' : 'text-zinc-400 hover:text-white hover:bg-[#202026]'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>{s.label}</span>
+              <span className={`px-1.5 rounded-full text-[10px] ${active ? 'bg-black/20' : n ? 'bg-[#E5A93C]/20 text-[#E5A93C]' : 'bg-[#272730]'}`}>{n}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">

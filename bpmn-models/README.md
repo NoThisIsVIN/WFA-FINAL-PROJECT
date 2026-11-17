@@ -6,7 +6,7 @@
 | `decisions/` | 6 DMN files (classification, technical assessment, battery check, inspection checklist, final approval, tariff rate) |
 | `forms/` | 18 Camunda forms for the user tasks |
 | `deploy/` | PowerShell scripts: `start-all.ps1`, `deploy.ps1`, `stop-all.ps1` |
-| `diagrams/` | PNG exports for the report |
+| `diagrams/` | PNG renders of both processes and every stage, plus Operate screenshots |
 
 ## Lint
 
