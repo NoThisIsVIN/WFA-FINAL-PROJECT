@@ -67,7 +67,7 @@ Required by the use case:
 | Process engine | Camunda 8.10 self-managed via c8run 8.10.7 (Zeebe, Operate, Tasklist, Connectors runtime) |
 | Modelling | BPMN 2.0, DMN 1.3, Camunda Forms, FEEL; linted with bpmnlint + camunda-compat (8.10 rules) |
 | Backend | Java 25, Spring Boot 3.5, Spring Data JPA, Camunda Java client 8.10 (`@JobWorker`) |
-| Database | H2 file database (default), PostgreSQL (`postgres` profile, used by Docker) |
+| Database | PostgreSQL (`postgres` profile, used by Docker); H2 file database only as a fallback when run without Docker |
 | Frontend | React 18, Vite 6, Tailwind CSS 3, GSAP, lucide-react |
 | Connectors | HTTP JSON (REST) outbound, Email (SMTP) outbound, Webhook inbound with HMAC check |
 | Mail | Mailpit (local SMTP sink with web UI) |
@@ -104,7 +104,7 @@ Required by the use case:
 flowchart LR
     U[Applicant browser] --> FE[React portal<br/>Vite :5173 / nginx :3000]
     FE -- "/api, /health" --> API[portal-api :8090<br/>Spring Boot + JPA]
-    API -- JPA --> DB[(H2 file DB<br/>or PostgreSQL)]
+    API -- JPA --> DB[(PostgreSQL)]
     API -- "REST v2: publish message,<br/>broadcast signal, search" --> C8[Camunda 8.10 c8run<br/>Zeebe REST :8080 / gRPC :26500]
     API -- "e-sign, faults" --> MOCK[mock-services :8091]
     C8 <-- "activate / complete jobs" --> W[process-workers<br/>job workers]
