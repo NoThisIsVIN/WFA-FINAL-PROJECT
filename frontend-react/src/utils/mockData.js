@@ -2,8 +2,23 @@
 
 export const PRESETS = [
   {
+    id: 'micro-balcony',
+    label: '1. Micro Balcony Solar 0.8 kW',
+    tag: 'Micro Fast Path',
+    description: 'Balcony kit up to 1 kW: DMN gives MICRO, only a self declaration is needed and the case is registered without a grid check.',
+    data: {
+      applicant: { name: 'Priya Nair', email: 'priya.nair@example.com', type: 'HOME' },
+      site: { address: 'Flat 5B, Lotus Apartments, Metro City', region: 'Metro City North', lat: 12.9698, lon: 77.6010, meterId: 'MCP-MTR-100208', substationId: 'SUB-07' },
+      system: { pvKw: 0.8, inverterKw: 0.8, batteryKwh: 0, batteryKw: 0 },
+      devices: [ { serialNumber: 'INV-M-0208', type: 'INVERTER', model: 'SunWave Micro 800', certificateId: 'CERT-INV-0801' } ],
+      installer: { licenseNo: 'LIC-3321' },
+      demoMode: true,
+      useMockWeather: true
+    }
+  },
+  {
     id: 'homeowner-standard',
-    label: 'Homeowner Solar 6.5 kW',
+    label: '2. Homeowner Solar 6.5 kW',
     tag: 'Standard',
     description: 'Single-family home with 6.5 kW PV, one hybrid inverter and a small battery.',
     data: {
@@ -27,8 +42,41 @@ export const PRESETS = [
     }
   },
   {
+    id: 'home-duplicate-meter',
+    label: '3. Duplicate Meter',
+    tag: 'Duplicate Check',
+    description: 'Reuses the meter of the last Homeowner example (2). Submit 2 first and leave it open: this case closes as a duplicate.',
+    data: {
+      applicant: { name: 'Asha Rao', email: 'asha.rao@example.com', type: 'HOME' },
+      site: { address: '14 Lakeview Road, Metro City', region: 'Metro City North', lat: 12.9716, lon: 77.5946, meterId: 'MCP-MTR-100001', substationId: 'SUB-07' },
+      system: { pvKw: 6.5, inverterKw: 6.0, batteryKwh: 5.0, batteryKw: 3.0 },
+      devices: [
+        { serialNumber: 'INV-H-0001', type: 'INVERTER', model: 'SunWave Hybrid 6K', certificateId: 'CERT-INV-6001' },
+        { serialNumber: 'BAT-H-0001', type: 'BATTERY', model: 'VoltStore 5.1 kWh', certificateId: 'CERT-BAT-5101' }
+      ],
+      installer: { licenseNo: 'LIC-3321' },
+      demoMode: true,
+      useMockWeather: true
+    }
+  },
+  {
+    id: 'home-expired-licence',
+    label: '4. Expired Installer Licence',
+    tag: 'Fix Request Loop',
+    description: 'Installer licence LIC-9000 has expired: intake sends fix requests, then manual review.',
+    data: {
+      applicant: { name: 'Meena Iyer', email: 'meena.iyer@example.com', type: 'HOME' },
+      site: { address: '7 Temple Street, Metro City', region: 'Metro City North', lat: 12.9784, lon: 77.5996, meterId: 'MCP-MTR-100314', substationId: 'SUB-07' },
+      system: { pvKw: 5.0, inverterKw: 5.0, batteryKwh: 0, batteryKw: 0 },
+      devices: [ { serialNumber: 'INV-H-0314', type: 'INVERTER', model: 'SunWave 5K', certificateId: 'CERT-INV-5002' } ],
+      installer: { licenseNo: 'LIC-9000' },
+      demoMode: true,
+      useMockWeather: true
+    }
+  },
+  {
     id: 'factory-industrial',
-    label: 'Factory Solar Array 45 kW + Storage',
+    label: '5. Factory Solar Array 45 kW + Storage',
     tag: 'Commercial Multi-Instance',
     description: 'Factory roof with two parallel inverters and a 30 kWh battery: one inspection per device.',
     data: {
@@ -54,7 +102,7 @@ export const PRESETS = [
   },
   {
     id: 'high-grid-load',
-    label: 'High Substation Load (Upgrade Trigger)',
+    label: '6. High Substation Load (Upgrade Trigger)',
     tag: 'Sub-Process Demo',
     description: 'Large system on a nearly full substation (SUB-09) to trigger the Transformer Capacity Upgrade sub-process.',
     data: {
@@ -74,57 +122,6 @@ export const PRESETS = [
         { serialNumber: 'BAT-U-0001', type: 'BATTERY', model: 'VoltStore Commercial 50 kWh', certificateId: 'CERT-BAT-5001' }
       ],
       installer: { licenseNo: 'LIC-3321' },
-      demoMode: true,
-      useMockWeather: true
-    }
-  },
-  {
-    id: 'home-expired-licence',
-    label: 'Expired Installer Licence',
-    tag: 'Fix Request Loop',
-    description: 'Installer licence LIC-9000 has expired: intake sends fix requests, then manual review.',
-    data: {
-      applicant: { name: 'Meena Iyer', email: 'meena.iyer@example.com', type: 'HOME' },
-      site: { address: '7 Temple Street, Metro City', region: 'Metro City North', lat: 12.9784, lon: 77.5996, meterId: 'MCP-MTR-100314', substationId: 'SUB-07' },
-      system: { pvKw: 5.0, inverterKw: 5.0, batteryKwh: 0, batteryKw: 0 },
-      devices: [ { serialNumber: 'INV-H-0314', type: 'INVERTER', model: 'SunWave 5K', certificateId: 'CERT-INV-5002' } ],
-      installer: { licenseNo: 'LIC-9000' },
-      demoMode: true,
-      useMockWeather: true
-    }
-  },
-  {
-    id: 'home-duplicate-meter',
-    label: 'Duplicate Meter',
-    tag: 'Duplicate Check',
-    description: 'Same meter as the Homeowner example. Submit that one first: this case closes as a duplicate.',
-    data: {
-      applicant: { name: 'Asha Rao', email: 'asha.rao@example.com', type: 'HOME' },
-      site: { address: '14 Lakeview Road, Metro City', region: 'Metro City North', lat: 12.9716, lon: 77.5946, meterId: 'MCP-MTR-100001', substationId: 'SUB-07' },
-      system: { pvKw: 6.5, inverterKw: 6.0, batteryKwh: 5.0, batteryKw: 3.0 },
-      devices: [
-        { serialNumber: 'INV-H-0001', type: 'INVERTER', model: 'SunWave Hybrid 6K', certificateId: 'CERT-INV-6001' },
-        { serialNumber: 'BAT-H-0001', type: 'BATTERY', model: 'VoltStore 5.1 kWh', certificateId: 'CERT-BAT-5101' }
-      ],
-      installer: { licenseNo: 'LIC-3321' },
-      demoMode: true,
-      useMockWeather: true
-    }
-  },
-  {
-    id: 'home-oversized-battery',
-    label: 'Oversized Home Battery 40 kWh',
-    tag: 'Battery Review',
-    description: 'Home battery above the 30 kWh limit: the battery check fails and an engineer reviews it.',
-    data: {
-      applicant: { name: 'Rahul Menon', email: 'rahul.menon@example.com', type: 'HOME' },
-      site: { address: '3 Hill View Lane, Metro City', region: 'Metro City South', lat: 12.9121, lon: 77.6446, meterId: 'MCP-MTR-100577', substationId: 'SUB-07' },
-      system: { pvKw: 8.0, inverterKw: 8.0, batteryKwh: 40.0, batteryKw: 5.0 },
-      devices: [
-        { serialNumber: 'INV-H-0577', type: 'INVERTER', model: 'SunWave Hybrid 8K', certificateId: 'CERT-INV-8001' },
-        { serialNumber: 'BAT-H-0577', type: 'BATTERY', model: 'VoltStore 40 kWh', certificateId: 'CERT-BAT-4001' }
-      ],
-      installer: { licenseNo: 'LIC-4410' },
       demoMode: true,
       useMockWeather: true
     }

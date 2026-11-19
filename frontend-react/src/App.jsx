@@ -10,7 +10,6 @@ import TasklistInbox from './components/Tasklist/TasklistInbox';
 import OpsConsole from './components/Ops/OpsConsole';
 import StaffTasklist from './components/StaffTasks/StaffTasklist';
 import MotionLayer from './motion/MotionLayer';
-import AmbientBackground from './motion/AmbientBackground';
 import { gsap, useGSAP, prefersReducedMotion } from './motion/motion';
 
 export default function App() {
@@ -36,7 +35,6 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen overflow-x-clip flex flex-col bg-[#0F0F12] text-zinc-100 antialiased selection:bg-[#E5A93C] selection:text-black">
-      <AmbientBackground />
       <MotionLayer />
 
       <div className="relative z-10 flex flex-col flex-1">

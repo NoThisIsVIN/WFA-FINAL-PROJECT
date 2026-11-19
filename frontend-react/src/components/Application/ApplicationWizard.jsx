@@ -71,10 +71,20 @@ export default function ApplicationWizard() {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const handlePresetSelect = (presetData) => {
+  const handlePresetSelect = (presetData, presetId) => {
     const data = JSON.parse(JSON.stringify(presetData));
-    // fresh meter id each time: the backend rejects a second open case on the same meter (F02)
-    data.site.meterId = `${data.site.meterId.split('-').slice(0, 2).join('-')}-${Date.now().toString().slice(-6)}`;
+    let lastHomeMeter = null;
+    try { lastHomeMeter = localStorage.getItem('lastHomeownerMeter'); } catch { /* storage blocked */ }
+    if (presetId === 'home-duplicate-meter' && lastHomeMeter) {
+      // reuse the meter of the last Homeowner example so the duplicate check (F02) fires
+      data.site.meterId = lastHomeMeter;
+    } else {
+      // fresh meter id each time: the backend rejects a second open case on the same meter (F02)
+      data.site.meterId = `${data.site.meterId.split('-').slice(0, 2).join('-')}-${Date.now().toString().slice(-6)}`;
+      if (presetId === 'homeowner-standard') {
+        try { localStorage.setItem('lastHomeownerMeter', data.site.meterId); } catch { /* storage blocked */ }
+      }
+    }
     setFormData(data);
     setErrors({});
     addToast('Example details filled in!', 'info');
@@ -367,9 +377,9 @@ export default function ApplicationWizard() {
               </div>
               <input
                 type="range"
-                min="0.5"
+                min="0.1"
                 max="80"
-                step="0.5"
+                step="0.1"
                 value={formData.system.pvKw}
                 onChange={(e) =>
                   setFormData({
@@ -389,9 +399,9 @@ export default function ApplicationWizard() {
               </div>
               <input
                 type="range"
-                min="0.5"
+                min="0.1"
                 max="75"
-                step="0.5"
+                step="0.1"
                 value={formData.system.inverterKw}
                 onChange={(e) =>
                   setFormData({

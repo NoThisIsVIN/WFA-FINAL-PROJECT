@@ -24,7 +24,7 @@ export default function PresetsBar({ onSelectPreset }) {
               key={preset.id}
               data-stagger
               type="button"
-              onClick={() => onSelectPreset(preset.data)}
+              onClick={() => onSelectPreset(preset.data, preset.id)}
               className="group text-left p-3.5 rounded-xl border border-[#27272E] bg-[#202026]/80 hover:bg-[#25252E] hover:border-[#E5A93C]/60 transition-all duration-200 flex flex-col justify-between"
             >
               <div>
